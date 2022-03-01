@@ -1,0 +1,9 @@
+package builtin
+
+fun print(s string){
+	C.printf('%s', s.str)
+}
+
+fun println(s string){
+	C.printf('%s\n', s.str)
+}

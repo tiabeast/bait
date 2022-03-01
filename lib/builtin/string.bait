@@ -1,0 +1,6 @@
+package builtin
+
+struct string{
+	str &byte
+	len int
+}
