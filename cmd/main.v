@@ -22,7 +22,7 @@ fn main() {
 }
 
 fn compile(path string) {
-	mut paths := bait_files_from_dir('lib/builtin')
+	mut paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
 	if !os.is_dir(path) && os.exists(path) && path.ends_with('.bait') {
 		paths << path
 	} else if os.is_dir(path) {

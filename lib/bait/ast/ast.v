@@ -18,9 +18,10 @@ pub:
 
 pub struct FunDecl {
 pub:
-	name   string
-	params []Param
-	stmts  []Stmt
+	name        string
+	params      []Param
+	return_type Type
+	stmts       []Stmt
 }
 
 pub struct Param {

@@ -15,6 +15,11 @@ pub:
 pub enum TypeKind {
 	placeholder
 	void
+	byte
+	i8
+	i16
+	i32
+	i64
 	string
 	struct_
 }
@@ -26,17 +31,32 @@ pub enum Language {
 
 const (
 	void_type_idx   = 1
-	string_type_idx = 2
+	byte_type_idx   = 2
+	i8_type_idx     = 3
+	i16_type_idx    = 4
+	i32_type_idx    = 5
+	i64_type_idx    = 6
+	string_type_idx = 7
 )
 
 pub const (
 	void_type   = new_type(void_type_idx)
+	byte_type   = new_type(byte_type_idx)
+	i8_type     = new_type(i8_type_idx)
+	i16_type    = new_type(i16_type_idx)
+	i32_type    = new_type(i32_type_idx)
+	i64_type    = new_type(i64_type_idx)
 	string_type = new_type(string_type_idx)
 )
 
 fn (mut t Table) register_builtin_type_symbols() {
 	t.register_type_symbol(kind: .placeholder)
 	t.register_type_symbol(kind: .void, name: 'void')
+	t.register_type_symbol(kind: .byte, name: 'byte')
+	t.register_type_symbol(kind: .i8, name: 'i8')
+	t.register_type_symbol(kind: .i16, name: 'i16')
+	t.register_type_symbol(kind: .i32, name: 'i32')
+	t.register_type_symbol(kind: .i64, name: 'i64')
 	t.register_type_symbol(kind: .string, name: 'string')
 }
 

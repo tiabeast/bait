@@ -41,10 +41,15 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 	p.check(.lpar)
 	params := p.fun_params()
 	p.check(.rpar)
+	mut return_type := ast.void_type
+	if p.tok.kind != .lcur {
+		return_type = p.parse_type()
+	}
 	stmts := p.parse_block_no_scope()
 	node := ast.FunDecl{
 		name: name
 		params: params
+		return_type: return_type
 		stmts: stmts
 	}
 	p.table.fns[node.name] = node

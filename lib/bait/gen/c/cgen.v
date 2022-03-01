@@ -119,7 +119,7 @@ fn (mut g Gen) package_decl(node ast.PackageDecl) {
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
 	name := c_name(node.name)
-	type_name := 'void'
+	type_name := g.typ(node.return_type)
 	s := '$type_name ${name}('
 	g.fun_decls.write_string(s)
 	g.write(s)
