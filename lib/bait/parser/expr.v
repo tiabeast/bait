@@ -5,15 +5,10 @@ import lib.bait.ast
 fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
-		.name {
-			node = p.name_expr()
-		}
-		.string {
-			node = p.string_expr()
-		}
-		else {
-			p.error('invalid expression: $p.tok')
-		}
+		.number { node = p.integer_literal() }
+		.name { node = p.name_expr() }
+		.string { node = p.string_literal() }
+		else { p.error('invalid expression: $p.tok') }
 	}
 	return p.expr_with_left(node, precedence)
 }
@@ -72,6 +67,14 @@ fn (mut p Parser) ident() ast.Ident {
 	}
 }
 
+fn (mut p Parser) integer_literal() ast.IntegerLiteral {
+	val := p.tok.lit
+	p.next()
+	return ast.IntegerLiteral{
+		val: val
+	}
+}
+
 fn (mut p Parser) name_expr() ast.Expr {
 	mut lang := ast.Language.bait
 	if p.tok.lit == 'C' {
@@ -85,7 +88,7 @@ fn (mut p Parser) name_expr() ast.Expr {
 	return p.ident()
 }
 
-fn (mut p Parser) string_expr() ast.Expr {
+fn (mut p Parser) string_literal() ast.StringLiteral {
 	val := p.tok.lit
 	p.next()
 	return ast.StringLiteral{

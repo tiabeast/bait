@@ -1,7 +1,7 @@
 module ast
 
-pub type Stmt = EmptyStmt | ExprStmt | FunDecl | PackageDecl | StructDecl
-pub type Expr = CallExpr | EmptyExpr | Ident | SelectorExpr | StringLiteral
+pub type Stmt = ConstDecl | EmptyStmt | ExprStmt | FunDecl | PackageDecl | Return | StructDecl
+pub type Expr = CallExpr | EmptyExpr | Ident | IntegerLiteral | SelectorExpr | StringLiteral
 
 pub struct EmptyStmt {}
 
@@ -9,6 +9,12 @@ pub struct EmptyExpr {}
 
 pub fn empty_expr() Expr {
 	return EmptyExpr{}
+}
+
+pub struct ConstDecl {
+pub:
+	name string
+	expr Expr
 }
 
 pub struct ExprStmt {
@@ -35,6 +41,11 @@ pub:
 	name string
 }
 
+pub struct Return {
+pub:
+	expr Expr
+}
+
 pub struct StructDecl {
 }
 
@@ -59,6 +70,11 @@ pub:
 pub struct Ident {
 pub:
 	name string
+}
+
+pub struct IntegerLiteral {
+pub:
+	val string
 }
 
 pub struct SelectorExpr {

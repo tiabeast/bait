@@ -29,9 +29,11 @@ fn (mut c Checker) stmts(stmts []ast.Stmt) {
 fn (mut c Checker) stmt(node ast.Stmt) {
 	match mut node {
 		ast.EmptyStmt {}
+		ast.ConstDecl { c.const_decl(node) }
 		ast.ExprStmt { c.expr(node.expr) }
 		ast.FunDecl { c.fun_decl(node) }
 		ast.PackageDecl { c.package_decl(node) }
+		ast.Return { c.return_stmt(node) }
 		ast.StructDecl { c.struct_decl(node) }
 	}
 }
@@ -41,10 +43,15 @@ fn (mut c Checker) expr(node ast.Expr) ast.Type {
 		ast.EmptyExpr { panic('found empty expr') }
 		ast.CallExpr { return c.call_expr(node) }
 		ast.Ident { return c.ident(node) }
+		ast.IntegerLiteral { return ast.i32_type }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
 		ast.StringLiteral { return ast.string_type }
 	}
 	return ast.void_type
+}
+
+fn (mut c Checker) const_decl(node ast.ConstDecl) {
+	c.expr(node.expr)
 }
 
 fn (mut c Checker) fun_decl(node ast.FunDecl) {
@@ -53,6 +60,10 @@ fn (mut c Checker) fun_decl(node ast.FunDecl) {
 
 fn (mut c Checker) package_decl(node ast.PackageDecl) {
 	c.pkg_name = node.name
+}
+
+fn (mut c Checker) return_stmt(node ast.Return) {
+	c.expr(node.expr)
 }
 
 fn (mut c Checker) struct_decl(node ast.StructDecl) {

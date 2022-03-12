@@ -93,9 +93,11 @@ fn (mut g Gen) stmts(stmts []ast.Stmt) {
 fn (mut g Gen) stmt(node ast.Stmt) {
 	match node {
 		ast.EmptyStmt {}
+		ast.ConstDecl { g.const_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.FunDecl { g.fun_decl(node) }
 		ast.PackageDecl { g.package_decl(node) }
+		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // struct declarations are handled by write_types
 	}
 	if node is ast.ExprStmt && !g.empty_line {
@@ -108,13 +110,23 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.EmptyExpr {}
 		ast.CallExpr { g.call_expr(node) }
 		ast.Ident { g.ident(node) }
+		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.SelectorExpr { g.selector_expr(node) }
 		ast.StringLiteral { g.string_literal(node) }
 	}
 }
 
-fn (mut g Gen) package_decl(node ast.PackageDecl) {
-	g.pkg_name = node.name
+fn (mut g Gen) expr_string(node ast.Expr) string {
+	pos := g.out.len
+	g.expr(node)
+	expr_str := g.out.cut_to(pos)
+	return expr_str.trim_space()
+}
+
+fn (mut g Gen) const_decl(node ast.ConstDecl) {
+	name := c_name(node.name).to_upper()
+	val := g.expr_string(node.expr)
+	g.type_impls.writeln('#define CONST_$name $val')
 }
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
@@ -144,6 +156,16 @@ fn (mut g Gen) fun_params(params []ast.Param) {
 	}
 }
 
+fn (mut g Gen) package_decl(node ast.PackageDecl) {
+	g.pkg_name = node.name
+}
+
+fn (mut g Gen) return_stmt(node ast.Return) {
+	g.write('return ')
+	g.expr(node.expr)
+	g.writeln(';')
+}
+
 fn (mut g Gen) call_expr(node ast.CallExpr) {
 	g.lang = node.lang
 	name := c_name(node.name)
@@ -165,6 +187,10 @@ fn (mut g Gen) call_args(args []ast.CallArg) {
 fn (mut g Gen) ident(node ast.Ident) {
 	name := c_name(node.name)
 	g.write(name)
+}
+
+fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {
+	g.write(node.val)
 }
 
 fn (mut g Gen) selector_expr(node ast.SelectorExpr) {

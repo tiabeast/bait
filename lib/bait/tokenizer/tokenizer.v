@@ -48,6 +48,9 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				return t.new_token(kind, '')
 			}
 			return t.new_token(.name, name)
+		} else if c.is_digit() {
+			num := t.number_literal()
+			return t.new_token(.number, num)
 		}
 		nextc := t.next_char()
 		match c {
@@ -55,17 +58,14 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				str := t.string_literal()
 				return t.new_token(.string, str)
 			}
-			`.` {
-				return t.new_token(.dot, '')
-			}
-			`,` {
-				return t.new_token(.comma, '')
-			}
 			`/` {
 				if nextc == `/` {
 					t.ignore_line()
 					continue
 				}
+			}
+			`=` {
+				return t.new_token(.assign, '')
 			}
 			`(` {
 				return t.new_token(.lpar, '')
@@ -78,6 +78,12 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 			}
 			`}` {
 				return t.new_token(.rcur, '')
+			}
+			`.` {
+				return t.new_token(.dot, '')
+			}
+			`,` {
+				return t.new_token(.comma, '')
 			}
 			`&` {
 				return t.new_token(.amp, '')
@@ -120,6 +126,17 @@ fn (mut t Tokenizer) string_literal() string {
 			t.is_inside_string = false
 			break
 		}
+	}
+	return t.text[start_pos..t.pos]
+}
+
+fn (mut t Tokenizer) number_literal() string {
+	start_pos := t.pos
+	for {
+		if !t.text[t.pos].is_digit() {
+			break
+		}
+		t.pos++
 	}
 	return t.text[start_pos..t.pos]
 }

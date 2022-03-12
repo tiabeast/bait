@@ -11,21 +11,27 @@ pub enum Kind {
 	eof
 	name
 	string
-	dot // .
-	comma // ,
+	number
+	assign // =
 	lpar // (
 	rpar // )
 	lcur // {
 	rcur // }
+	dot // .
+	comma // ,
 	amp // &
+	key_const
 	key_fun
 	key_package
+	key_return
 	key_struct
 }
 
 pub const keywords = {
+	'const':   Kind.key_const
 	'fun':     Kind.key_fun
 	'package': Kind.key_package
+	'return':  Kind.key_return
 	'struct':  Kind.key_struct
 }
 

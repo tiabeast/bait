@@ -4,28 +4,31 @@ import lib.bait.ast
 
 fn (mut p Parser) stmt() ast.Stmt {
 	match p.tok.kind {
-		.name {
-			return p.expr_stmt()
-		}
-		else {
-			return p.expr_stmt()
-		}
+		.name { return p.expr_stmt() }
+		.key_return { return p.return_stmt() }
+		else { return p.expr_stmt() }
 	}
 }
 
 fn (mut p Parser) top_level_stmt() ast.Stmt {
 	match p.tok.kind {
-		.key_fun {
-			return p.fun_decl()
-		}
-		.key_struct {
-			return p.struct_decl()
-		}
-		else {
-			p.error('bad toplevel stmt: $p.tok')
-		}
+		.key_const { return p.const_decl() }
+		.key_fun { return p.fun_decl() }
+		.key_struct { return p.struct_decl() }
+		else { p.error('bad toplevel stmt: $p.tok') }
 	}
 	return ast.EmptyStmt{}
+}
+
+fn (mut p Parser) const_decl() ast.ConstDecl {
+	p.check(.key_const)
+	name := p.check_name()
+	p.check(.assign)
+	expr := p.expr(0)
+	return ast.ConstDecl{
+		name: name
+		expr: expr
+	}
 }
 
 fn (mut p Parser) expr_stmt() ast.ExprStmt {
@@ -83,6 +86,14 @@ fn (mut p Parser) package_decl() ast.PackageDecl {
 	p.pkg_name = name
 	return ast.PackageDecl{
 		name: name
+	}
+}
+
+fn (mut p Parser) return_stmt() ast.Return {
+	p.check(.key_return)
+	expr := p.expr(0)
+	return ast.Return{
+		expr: expr
 	}
 }
 
