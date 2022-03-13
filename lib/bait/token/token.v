@@ -13,6 +13,7 @@ pub enum Kind {
 	string
 	number
 	assign // =
+	decl_assign // :=
 	lpar // (
 	rpar // )
 	lcur // {

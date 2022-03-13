@@ -32,6 +32,7 @@ fn (mut p Parser) call_expr(lang ast.Language) ast.CallExpr {
 	p.check(.rpar)
 	return ast.CallExpr{
 		name: name
+		pkg: p.pkg_name
 		args: args
 		lang: lang
 	}
@@ -54,6 +55,17 @@ fn (mut p Parser) call_args() []ast.CallArg {
 fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	p.check(.dot)
 	name := p.check_name()
+	if p.tok.kind == .lpar {
+		p.check(.lpar)
+		args := p.call_args()
+		p.check(.rpar)
+		return ast.CallExpr{
+			name: name
+			args: args
+			receiver: left
+			is_method: true
+		}
+	}
 	return ast.SelectorExpr{
 		expr: left
 		field_name: name
@@ -64,6 +76,7 @@ fn (mut p Parser) ident() ast.Ident {
 	name := p.check_name()
 	return ast.Ident{
 		name: name
+		scope: p.scope
 	}
 }
 

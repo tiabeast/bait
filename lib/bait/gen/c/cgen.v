@@ -76,7 +76,7 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 }
 
 fn (mut g Gen) c_main() {
-	g.writeln('int main(int argc, char *argv[]) {')
+	g.writeln('int main(int argc, char* argv[]) {')
 	g.writeln('\tmain__main();')
 	g.writeln('\treturn 0;')
 	g.writeln('}')
@@ -93,6 +93,7 @@ fn (mut g Gen) stmts(stmts []ast.Stmt) {
 fn (mut g Gen) stmt(node ast.Stmt) {
 	match node {
 		ast.EmptyStmt {}
+		ast.AsssignStmt { g.assign_stmt(node) }
 		ast.ConstDecl { g.const_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.FunDecl { g.fun_decl(node) }
@@ -123,6 +124,18 @@ fn (mut g Gen) expr_string(node ast.Expr) string {
 	return expr_str.trim_space()
 }
 
+fn (mut g Gen) assign_stmt(node ast.AsssignStmt) {
+	is_decl := node.op == .decl_assign
+	if is_decl {
+		typ := g.typ(node.right_type)
+		g.write('$typ ')
+	}
+	g.expr(node.left)
+	g.write(' = ')
+	g.expr(node.right)
+	g.writeln(';')
+}
+
 fn (mut g Gen) const_decl(node ast.ConstDecl) {
 	name := c_name(node.name).to_upper()
 	val := g.expr_string(node.expr)
@@ -130,14 +143,18 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 }
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
-	name := c_name(node.name)
+	mut name := c_name(node.name)
+	if node.is_method {
+		sym := g.table.get_type_symbol(node.params[0].typ)
+		name = '${sym.name}_$name'
+	}
 	type_name := g.typ(node.return_type)
 	s := '$type_name ${name}('
 	g.fun_decls.write_string(s)
 	g.write(s)
 	g.fun_params(node.params)
 	g.fun_decls.writeln(');')
-	g.writeln('){')
+	g.writeln(') {')
 	g.stmts(node.stmts)
 	g.writeln('};\n')
 }
@@ -162,14 +179,30 @@ fn (mut g Gen) package_decl(node ast.PackageDecl) {
 
 fn (mut g Gen) return_stmt(node ast.Return) {
 	g.write('return ')
+	if node.expr.is_auto_deref() {
+		g.write('*')
+	}
 	g.expr(node.expr)
 	g.writeln(';')
 }
 
 fn (mut g Gen) call_expr(node ast.CallExpr) {
 	g.lang = node.lang
-	name := c_name(node.name)
+	mut name := c_name(node.name)
+	if node.is_method {
+		sym := g.table.get_type_symbol(node.receiver_type)
+		name = '${sym.name}_$name'
+	}
 	g.write('${name}(')
+	if node.is_method {
+		if node.receiver_type.nr_amps() == 0 {
+			g.write('&')
+		}
+		g.expr(node.receiver)
+		if node.args.len > 0 {
+			g.write(', ')
+		}
+	}
 	g.call_args(node.args)
 	g.write(')')
 	g.lang = .bait

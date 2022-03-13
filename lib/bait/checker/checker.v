@@ -16,32 +16,34 @@ pub fn (mut c Checker) check_files(files []&ast.File) {
 	}
 }
 
-fn (mut c Checker) check(file &ast.File) {
-	c.stmts(file.stmts)
+fn (mut c Checker) check(file_ &ast.File) {
+	mut file := file_
+	c.stmts(mut file.stmts)
 }
 
-fn (mut c Checker) stmts(stmts []ast.Stmt) {
-	for stmt in stmts {
-		c.stmt(stmt)
+fn (mut c Checker) stmts(mut stmts []ast.Stmt) {
+	for mut stmt in stmts {
+		c.stmt(mut stmt)
 	}
 }
 
-fn (mut c Checker) stmt(node ast.Stmt) {
+fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
 		ast.EmptyStmt {}
-		ast.ConstDecl { c.const_decl(node) }
-		ast.ExprStmt { c.expr(node.expr) }
-		ast.FunDecl { c.fun_decl(node) }
+		ast.AsssignStmt { c.assign_stmt(mut node) }
+		ast.ConstDecl { c.const_decl(mut node) }
+		ast.ExprStmt { c.expr(mut node.expr) }
+		ast.FunDecl { c.fun_decl(mut node) }
 		ast.PackageDecl { c.package_decl(node) }
-		ast.Return { c.return_stmt(node) }
+		ast.Return { c.return_stmt(mut node) }
 		ast.StructDecl { c.struct_decl(node) }
 	}
 }
 
-fn (mut c Checker) expr(node ast.Expr) ast.Type {
+fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	match mut node {
 		ast.EmptyExpr { panic('found empty expr') }
-		ast.CallExpr { return c.call_expr(node) }
+		ast.CallExpr { return c.call_expr(mut node) }
 		ast.Ident { return c.ident(node) }
 		ast.IntegerLiteral { return ast.i32_type }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
@@ -50,50 +52,77 @@ fn (mut c Checker) expr(node ast.Expr) ast.Type {
 	return ast.void_type
 }
 
-fn (mut c Checker) const_decl(node ast.ConstDecl) {
-	c.expr(node.expr)
+fn (mut c Checker) assign_stmt(mut node ast.AsssignStmt) {
+	is_decl := node.op == .decl_assign
+	if is_decl {
+		typ := c.expr(mut node.right)
+		c.expr(mut node.left)
+		node.right_type = typ
+		node.left_type = typ
+	} else {
+		c.expr(mut node.left)
+		c.expr(mut node.right)
+	}
 }
 
-fn (mut c Checker) fun_decl(node ast.FunDecl) {
-	c.stmts(node.stmts)
+fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
+	c.expr(mut node.expr)
+}
+
+fn (mut c Checker) fun_decl(mut node ast.FunDecl) {
+	c.stmts(mut node.stmts)
 }
 
 fn (mut c Checker) package_decl(node ast.PackageDecl) {
 	c.pkg_name = node.name
 }
 
-fn (mut c Checker) return_stmt(node ast.Return) {
-	c.expr(node.expr)
+fn (mut c Checker) return_stmt(mut node ast.Return) {
+	c.expr(mut node.expr)
 }
 
 fn (mut c Checker) struct_decl(node ast.StructDecl) {
 }
 
-fn (mut c Checker) call_expr(node ast.CallExpr) ast.Type {
-	name := node.name
+fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 	mut found := false
-	if node.lang == .c || name in c.table.fns {
+	if !node.name.contains('.') && node.pkg != 'builtin' {
+		full_name := '${node.pkg}.$node.name'
+		if full_name in c.table.fns {
+			found = true
+			node.name = full_name
+		}
+	}
+	if !found && (node.name in c.table.fns || node.lang == .c) {
 		found = true
 	}
 	if !found {
-		c.error('unknown function: $name')
+		c.error('unknown function: $node.name')
 	}
-	c.call_args(node.args)
-	return ast.void_type
+	node.return_type = c.table.fns[node.name].return_type
+	if node.is_method {
+		node.receiver_type = c.expr(mut node.receiver)
+	}
+	c.call_args(mut node.args)
+	return node.return_type
 }
 
-fn (mut c Checker) call_args(args []ast.CallArg) {
-	for a in args {
-		c.expr(a.expr)
+fn (mut c Checker) call_args(mut args []ast.CallArg) {
+	for mut a in args {
+		c.expr(mut a.expr)
 	}
 }
 
 fn (mut c Checker) ident(node ast.Ident) ast.Type {
+	obj := node.scope.find(node.name)
+	if obj.name.len > 0 {
+		return obj.typ
+	}
 	return ast.void_type
 }
 
 fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
-	typ := c.expr(node.expr)
+	typ := c.expr(mut node.expr)
 	fsym := c.table.get_type_symbol(typ)
 	match fsym.info {
 		ast.StructInfo {

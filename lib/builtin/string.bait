@@ -4,3 +4,8 @@ struct string{
 	str &byte
 	len int
 }
+
+fun (s string) to_lower()string{
+	// TODO
+	return s
+}

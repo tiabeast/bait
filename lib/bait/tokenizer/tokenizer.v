@@ -67,6 +67,12 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 			`=` {
 				return t.new_token(.assign, '')
 			}
+			`:` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.decl_assign, '')
+				}
+			}
 			`(` {
 				return t.new_token(.lpar, '')
 			}
