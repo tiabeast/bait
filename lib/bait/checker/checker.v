@@ -29,10 +29,12 @@ fn (mut c Checker) stmts(mut stmts []ast.Stmt) {
 
 fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
-		ast.EmptyStmt {}
+		ast.EmptyStmt { panic('found empty stmt') }
 		ast.AsssignStmt { c.assign_stmt(mut node) }
 		ast.ConstDecl { c.const_decl(mut node) }
 		ast.ExprStmt { c.expr(mut node.expr) }
+		ast.ForStmt { c.for_stmt(mut node) }
+		ast.ForClassicStmt { c.for_classic_stmt(mut node) }
 		ast.FunDecl { c.fun_decl(mut node) }
 		ast.PackageDecl { c.package_decl(node) }
 		ast.Return { c.return_stmt(mut node) }
@@ -43,9 +45,13 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 	match mut node {
 		ast.EmptyExpr { panic('found empty expr') }
+		ast.BoolLiteral { return ast.bool_type }
 		ast.CallExpr { return c.call_expr(mut node) }
 		ast.Ident { return c.ident(node) }
+		ast.IfExpr { return c.if_expr(mut node) }
+		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
+		ast.PrefixExpr { return c.prefix_expr(mut node) }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
 		ast.StringLiteral { return ast.string_type }
 	}
@@ -59,6 +65,9 @@ fn (mut c Checker) assign_stmt(mut node ast.AsssignStmt) {
 		c.expr(mut node.left)
 		node.right_type = typ
 		node.left_type = typ
+		if mut node.left is ast.Ident {
+			node.left.scope.update_type(node.left.name, typ)
+		}
 	} else {
 		c.expr(mut node.left)
 		c.expr(mut node.right)
@@ -67,6 +76,18 @@ fn (mut c Checker) assign_stmt(mut node ast.AsssignStmt) {
 
 fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 	c.expr(mut node.expr)
+}
+
+fn (mut c Checker) for_stmt(mut node ast.ForStmt) {
+	c.expr(mut node.cond)
+	c.stmts(mut node.stmts)
+}
+
+fn (mut c Checker) for_classic_stmt(mut node ast.ForClassicStmt) {
+	c.stmt(mut node.init)
+	c.expr(mut node.cond)
+	c.stmt(mut node.inc)
+	c.stmts(mut node.stmts)
 }
 
 fn (mut c Checker) fun_decl(mut node ast.FunDecl) {
@@ -119,6 +140,25 @@ fn (mut c Checker) ident(node ast.Ident) ast.Type {
 		return obj.typ
 	}
 	return ast.void_type
+}
+
+fn (mut c Checker) if_expr(mut node ast.IfExpr) ast.Type {
+	for mut b in node.branches {
+		c.expr(mut b.cond)
+		c.stmts(mut b.stmts)
+	}
+	return ast.void_type
+}
+
+fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
+	node.left_type = c.expr(mut node.left)
+	node.right_type = c.expr(mut node.right)
+	return node.left_type
+}
+
+fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {
+	node.right_type = c.expr(mut node.right)
+	return node.right_type
 }
 
 fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {

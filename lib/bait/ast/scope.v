@@ -10,9 +10,9 @@ pub mut:
 
 pub struct ScopeObject {
 pub:
-	name       string
-	typ        Type
-	auto_deref bool
+	name string
+pub mut:
+	typ Type
 }
 
 pub fn (mut s Scope) register(var ScopeObject) {
@@ -32,4 +32,8 @@ pub fn (s &Scope) find(name string) ScopeObject {
 		}
 	}
 	return ScopeObject{}
+}
+
+pub fn (mut s Scope) update_type(name string, typ Type) {
+	s.objects[name].typ = typ
 }

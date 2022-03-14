@@ -6,11 +6,22 @@ pub type Stmt = AsssignStmt
 	| ConstDecl
 	| EmptyStmt
 	| ExprStmt
+	| ForClassicStmt
+	| ForStmt
 	| FunDecl
 	| PackageDecl
 	| Return
 	| StructDecl
-pub type Expr = CallExpr | EmptyExpr | Ident | IntegerLiteral | SelectorExpr | StringLiteral
+pub type Expr = BoolLiteral
+	| CallExpr
+	| EmptyExpr
+	| Ident
+	| IfExpr
+	| InfixExpr
+	| IntegerLiteral
+	| PrefixExpr
+	| SelectorExpr
+	| StringLiteral
 
 pub struct EmptyStmt {}
 
@@ -39,6 +50,22 @@ pub mut:
 pub struct ExprStmt {
 pub mut:
 	expr Expr
+}
+
+// for cond {}
+pub struct ForStmt {
+pub mut:
+	cond  Expr
+	stmts []Stmt
+}
+
+// for i := 0; i < 10; i += 1 {}
+pub struct ForClassicStmt {
+pub mut:
+	init  Stmt
+	cond  Expr
+	inc   Stmt
+	stmts []Stmt
 }
 
 pub struct FunDecl {
@@ -76,6 +103,11 @@ pub:
 	typ  Type
 }
 
+pub struct BoolLiteral {
+pub:
+	val bool
+}
+
 pub struct CallExpr {
 pub:
 	pkg       string
@@ -96,13 +128,43 @@ pub mut:
 
 pub struct Ident {
 pub:
-	name  string
+	name string
+pub mut:
 	scope &Scope
+}
+
+pub struct IfExpr {
+pub mut:
+	branches []IfBranch
+}
+
+pub struct IfBranch {
+pub mut:
+	cond  Expr
+	stmts []Stmt
+}
+
+pub struct InfixExpr {
+pub mut:
+	left       Expr
+	right      Expr
+	left_type  Type
+	right_type Type
+pub:
+	op token.Kind
 }
 
 pub struct IntegerLiteral {
 pub:
 	val string
+}
+
+pub struct PrefixExpr {
+pub mut:
+	right      Expr
+	right_type Type
+pub:
+	op token.Kind
 }
 
 pub struct SelectorExpr {
@@ -125,12 +187,4 @@ pub:
 	pkg  PackageDecl
 pub mut:
 	stmts []Stmt
-}
-
-pub fn (expr Expr) is_auto_deref() bool {
-	if expr is Ident {
-		obj := expr.scope.find(expr.name)
-		return obj.auto_deref
-	}
-	return false
 }

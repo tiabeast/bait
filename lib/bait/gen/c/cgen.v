@@ -96,6 +96,8 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.AsssignStmt { g.assign_stmt(node) }
 		ast.ConstDecl { g.const_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
+		ast.ForStmt { g.for_stmt(node) }
+		ast.ForClassicStmt { g.for_classic_stmt(node) }
 		ast.FunDecl { g.fun_decl(node) }
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
@@ -109,8 +111,12 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 fn (mut g Gen) expr(node ast.Expr) {
 	match node {
 		ast.EmptyExpr {}
+		ast.BoolLiteral { g.bool_literal(node) }
 		ast.CallExpr { g.call_expr(node) }
 		ast.Ident { g.ident(node) }
+		ast.IfExpr { g.if_expr(node) }
+		ast.InfixExpr { g.infix_expr(node) }
+		ast.PrefixExpr { g.prefix_expr(node) }
 		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.SelectorExpr { g.selector_expr(node) }
 		ast.StringLiteral { g.string_literal(node) }
@@ -131,7 +137,11 @@ fn (mut g Gen) assign_stmt(node ast.AsssignStmt) {
 		g.write('$typ ')
 	}
 	g.expr(node.left)
-	g.write(' = ')
+	if node.op.is_math_assign(){
+		g.write(' $node.op ')
+	}else{
+		g.write(' = ')
+	}
 	g.expr(node.right)
 	g.writeln(';')
 }
@@ -141,6 +151,10 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 	val := g.expr_string(node.expr)
 	g.type_impls.writeln('#define CONST_$name $val')
 }
+
+fn (mut g Gen) for_stmt(node ast.ForStmt) {}
+
+fn (mut g Gen) for_classic_stmt(node ast.ForClassicStmt) {}
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
 	mut name := c_name(node.name)
@@ -179,11 +193,12 @@ fn (mut g Gen) package_decl(node ast.PackageDecl) {
 
 fn (mut g Gen) return_stmt(node ast.Return) {
 	g.write('return ')
-	if node.expr.is_auto_deref() {
-		g.write('*')
-	}
 	g.expr(node.expr)
 	g.writeln(';')
+}
+
+fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
+	g.write('$node.val')
 }
 
 fn (mut g Gen) call_expr(node ast.CallExpr) {
@@ -195,7 +210,7 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 	}
 	g.write('${name}(')
 	if node.is_method {
-		if node.receiver_type.nr_amps() == 0 {
+		if node.receiver_type.nr_amps() > 0 {
 			g.write('&')
 		}
 		g.expr(node.receiver)
@@ -222,8 +237,29 @@ fn (mut g Gen) ident(node ast.Ident) {
 	g.write(name)
 }
 
+fn (mut g Gen) if_expr(node ast.IfExpr) {
+	for b in node.branches {
+		g.write('if (')
+		g.expr(b.cond)
+		g.writeln(') {')
+		g.stmts(b.stmts)
+		g.writeln('}')
+	}
+}
+
+fn (mut g Gen) infix_expr(node ast.InfixExpr) {
+	g.expr(node.left)
+	g.write(' $node.op ')
+	g.expr(node.right)
+}
+
 fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {
 	g.write(node.val)
+}
+
+fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
+	g.write(node.op.str())
+	g.expr(node.right)
 }
 
 fn (mut g Gen) selector_expr(node ast.SelectorExpr) {

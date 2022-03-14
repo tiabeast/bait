@@ -5,10 +5,31 @@ import lib.bait.ast
 fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
-		.number { node = p.integer_literal() }
-		.name { node = p.name_expr() }
-		.string { node = p.string_literal() }
-		else { p.error('invalid expression: $p.tok') }
+		.minus {
+			if p.peek_tok.kind == .number {
+				node = p.integer_literal()
+			} else {
+				node = p.prefix_expr()
+			}
+		}
+		.number {
+			node = p.integer_literal()
+		}
+		.name {
+			node = p.name_expr()
+		}
+		.string {
+			node = p.string_literal()
+		}
+		.key_if {
+			node = p.if_expr()
+		}
+		.key_true, .key_false {
+			node = p.bool_literal()
+		}
+		else {
+			p.error('invalid expression: $p.tok')
+		}
 	}
 	return p.expr_with_left(node, precedence)
 }
@@ -18,11 +39,20 @@ fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 	for precedence < p.tok.precedence() {
 		if p.tok.kind == .dot {
 			node = p.dot_expr(node)
+		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .lt, .gt, .le, .ge] {
+			return p.infix_expr(node)
 		} else {
 			return node
 		}
 	}
 	return node
+}
+
+fn (mut p Parser) bool_literal() ast.BoolLiteral {
+	p.next()
+	return ast.BoolLiteral{
+		val: p.prev_tok.kind == .key_true
+	}
 }
 
 fn (mut p Parser) call_expr(lang ast.Language) ast.CallExpr {
@@ -80,8 +110,43 @@ fn (mut p Parser) ident() ast.Ident {
 	}
 }
 
+fn (mut p Parser) if_expr() ast.IfExpr {
+	mut branches := []ast.IfBranch{}
+	for {
+		p.check(.key_if)
+		cond := p.expr(0)
+		stmts := p.parse_block_no_scope()
+		branches << ast.IfBranch{
+			cond: cond
+			stmts: stmts
+		}
+		break
+	}
+	return ast.IfExpr{
+		branches: branches
+	}
+}
+
+fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
+	op := p.tok.kind
+	p.next()
+	right := p.expr(0)
+	return ast.InfixExpr{
+		left: left
+		right: right
+		op: op
+	}
+}
+
 fn (mut p Parser) integer_literal() ast.IntegerLiteral {
-	val := p.tok.lit
+	is_neg := p.tok.kind == .minus
+	if is_neg {
+		p.next()
+	}
+	mut val := p.tok.lit
+	if is_neg {
+		val = '-$val'
+	}
 	p.next()
 	return ast.IntegerLiteral{
 		val: val
@@ -99,6 +164,16 @@ fn (mut p Parser) name_expr() ast.Expr {
 		return p.call_expr(lang)
 	}
 	return p.ident()
+}
+
+fn (mut p Parser) prefix_expr() ast.PrefixExpr {
+	op := p.tok.kind
+	p.next()
+	right := p.name_expr()
+	return ast.PrefixExpr{
+		op: op
+		right: right
+	}
 }
 
 fn (mut p Parser) string_literal() ast.StringLiteral {

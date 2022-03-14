@@ -22,7 +22,7 @@ fn (mut p Parser) top_level_stmt() ast.Stmt {
 
 fn (mut p Parser) assign_or_expr_stmt() ast.Stmt {
 	left := p.expr(0)
-	if p.tok.kind in [.assign, .decl_assign] {
+	if p.tok.kind in [.assign, .decl_assign]||p.tok.kind.is_math_assign(){
 		return p.assign_stmt(left)
 	}
 	return ast.ExprStmt{
@@ -34,6 +34,11 @@ fn (mut p Parser) assign_stmt(left ast.Expr) ast.AsssignStmt {
 	op := p.tok.kind
 	p.next()
 	right := p.expr(0)
+	if left is ast.Ident {
+		if op == .decl_assign {
+			p.scope.register(ast.ScopeObject{ name: left.name })
+		}
+	}
 	return ast.AsssignStmt{
 		op: op
 		left: left
@@ -68,7 +73,7 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 		is_method = true
 		p.next()
 		rec_name := p.check_name()
-		rec_type := p.parse_type().set_nr_amp(1)
+		rec_type := p.parse_type()
 		params << ast.Param{
 			name: rec_name
 			typ: rec_type
@@ -76,7 +81,6 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 		p.scope.register(
 			name: rec_name
 			typ: rec_type
-			auto_deref: true
 		)
 		p.check(.rpar)
 	}

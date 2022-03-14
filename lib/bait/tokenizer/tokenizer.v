@@ -58,13 +58,49 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				str := t.string_literal()
 				return t.new_token(.string, str)
 			}
+			`+` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.plus_assign, '')
+				}
+				return t.new_token(.plus, '')
+			}
+			`-` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.minus_assign, '')
+				}
+				return t.new_token(.minus, '')
+			}
+			`*` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.mul_assign, '')
+				}
+				return t.new_token(.mul, '')
+			}
 			`/` {
-				if nextc == `/` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.div_assign, '')
+				} else if nextc == `/` {
 					t.ignore_line()
 					continue
 				}
+				return t.new_token(.div, '')
+			}
+			`%` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.mod_assign, '')
+				}
+				return t.new_token(.mod, '')
 			}
 			`=` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.eq, '')
+				}
 				return t.new_token(.assign, '')
 			}
 			`:` {
@@ -93,6 +129,20 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 			}
 			`&` {
 				return t.new_token(.amp, '')
+			}
+			`<` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.le, '')
+				}
+				return t.new_token(.lt, '')
+			}
+			`>` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.ge, '')
+				}
+				return t.new_token(.gt, '')
 			}
 			else {}
 		}

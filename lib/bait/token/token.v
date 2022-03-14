@@ -12,8 +12,18 @@ pub enum Kind {
 	name
 	string
 	number
+	plus // +
+	minus // -
+	mul // *
+	div // /
+	mod // %
 	assign // =
 	decl_assign // :=
+	plus_assign // +=
+	minus_assign // -=
+	mul_assign // *=
+	div_assign // /=
+	mod_assign // %=
 	lpar // (
 	rpar // )
 	lcur // {
@@ -21,23 +31,39 @@ pub enum Kind {
 	dot // .
 	comma // ,
 	amp // &
+	eq // ==
+	lt // <
+	gt // >
+	le // <=
+	ge // >=
 	key_const
+	key_false
+	key_for
 	key_fun
+	key_if
 	key_package
 	key_return
 	key_struct
+	key_true
 }
 
 pub const keywords = {
 	'const':   Kind.key_const
+	'false':   Kind.key_false
+	'for':     Kind.key_for
 	'fun':     Kind.key_fun
+	'if':      Kind.key_if
 	'package': Kind.key_package
 	'return':  Kind.key_return
 	'struct':  Kind.key_struct
+	'true':    Kind.key_true
 }
 
 pub enum Precedence {
 	lowest
+	compare
+	sum
+	product
 	call
 }
 
@@ -46,9 +72,47 @@ const precedences = build_precedences()
 fn build_precedences() []Precedence {
 	mut p := []Precedence{len: int(Kind.key_struct)}
 	p[Kind.dot] = .call
+	// * / %
+	p[Kind.mul] = .product
+	p[Kind.div] = .product
+	p[Kind.mod] = .product
+	// + -
+	p[Kind.plus] = .sum
+	p[Kind.minus] = .sum
+	// == < > <= >=
+	p[Kind.eq] = .compare
+	p[Kind.lt] = .compare
+	p[Kind.gt] = .compare
+	p[Kind.le] = .compare
+	p[Kind.ge] = .compare
 	return p
 }
 
-pub fn (tok Token) precedence() int {
-	return int(token.precedences[tok.kind])
+pub fn (t Token) precedence() int {
+	return int(token.precedences[t.kind])
+}
+
+pub fn (k Kind)is_math_assign()bool{
+	return k in [.plus_assign, .minus_assign, .mul_assign, .div_assign, .mod_assign]
+}
+
+pub fn (k Kind) str() string {
+	return match k {
+		.plus_assign { '+=' }
+		.minus_assign { '-=' }
+		.mul_assign { '*=' }
+		.div_assign { '/=' }
+		.mod_assign { '%=' }
+		.plus { '+' }
+		.minus { '-' }
+		.mul { '*' }
+		.div { '/' }
+		.mod { '%' }
+		.eq { '==' }
+		.lt { '<' }
+		.gt { '>' }
+		.le { '<=' }
+		.ge { '>=' }
+		else { 'TODO' }
+	}
 }

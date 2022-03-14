@@ -7,3 +7,15 @@ fun print(s string){
 fun println(s string){
 	C.printf('%s\n', s.str)
 }
+
+fun eprint(s string) {
+	C.fprintf(stderr, '%s', s.str)
+}
+
+fun eprintln(s string) {
+	C.fprintf(stderr, '%s\n', s.str)
+}
+
+fun exit(code i32) {
+	C.exit(code)
+}

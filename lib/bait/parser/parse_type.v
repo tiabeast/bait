@@ -27,6 +27,9 @@ fn (mut p Parser) parse_type() ast.Type {
 		'i64' {
 			typ = ast.i64_type
 		}
+		'bool' {
+			typ = ast.bool_type
+		}
 		'string' {
 			typ = ast.string_type
 		}

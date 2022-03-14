@@ -2,6 +2,7 @@ module c
 
 const c_includes = '#include <stdio.h>
 #include <inttypes.h>
+#include <stdbool.h>
 '
 
 const c_builtin_types = 'typedef uint8_t byte;
