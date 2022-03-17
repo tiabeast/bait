@@ -52,6 +52,7 @@ fn (mut p Parser) const_decl() ast.ConstDecl {
 	name := p.check_name()
 	p.check(.assign)
 	expr := p.expr(0)
+	p.table.global_scope.register(ast.ScopeObject{ name: name })
 	return ast.ConstDecl{
 		name: name
 		expr: expr

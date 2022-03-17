@@ -11,6 +11,7 @@ pub enum Kind {
 	eof
 	name
 	string
+	char
 	number
 	plus // +
 	minus // -
@@ -69,12 +70,14 @@ pub enum Precedence {
 	sum
 	product
 	call
+	index
 }
 
 const precedences = build_precedences()
 
 fn build_precedences() []Precedence {
 	mut p := []Precedence{len: int(Kind.key_true) + 1}
+	p[Kind.lbr] = .index
 	p[Kind.dot] = .call
 	// * / %
 	p[Kind.mul] = .product
@@ -106,6 +109,7 @@ pub fn (k Kind) str() string {
 		.eof { 'eof' }
 		.name { 'name' }
 		.string { 'string' }
+		.char { 'char' }
 		.number { 'number' }
 		.plus { '+' }
 		.minus { '-' }

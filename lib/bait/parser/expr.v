@@ -5,6 +5,15 @@ import lib.bait.ast
 fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
+		.amp {
+			node = p.cast_expr(true)
+		}
+		.char {
+			node = p.char_literal()
+		}
+		.lbr {
+			node = p.array_init()
+		}
 		.minus {
 			if p.peek_tok.kind == .number {
 				node = p.integer_literal()
@@ -12,14 +21,11 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 				node = p.prefix_expr()
 			}
 		}
-		.number {
-			node = p.integer_literal()
-		}
 		.name {
 			node = p.name_expr()
 		}
-		.lbr {
-			node = p.array_init()
+		.number {
+			node = p.integer_literal()
 		}
 		.string {
 			node = p.string_literal()
@@ -37,18 +43,20 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 	return p.expr_with_left(node, precedence)
 }
 
-fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
-	mut node := left
+fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
+	mut left := left_
 	for precedence < p.tok.precedence() {
 		if p.tok.kind == .dot {
-			node = p.dot_expr(node)
+			left = p.dot_expr(left)
 		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .lt, .gt, .le, .ge] {
-			return p.infix_expr(node)
+			return p.infix_expr(left)
+		} else if p.tok.kind == .lbr {
+			return p.index_expr(left)
 		} else {
-			return node
+			return left
 		}
 	}
-	return node
+	return left
 }
 
 fn (mut p Parser) array_init() ast.ArrayInit {
@@ -66,15 +74,15 @@ fn (mut p Parser) array_init() ast.ArrayInit {
 		}
 		if p.tok.kind == .lcur {
 			p.next()
-		}
-		for p.tok.kind != .rcur {
-			key := p.check_name()
-			p.check(.colon)
-			if key == 'len' {
-				len_expr = p.expr(0)
+			for p.tok.kind != .rcur {
+				key := p.check_name()
+				p.check(.colon)
+				if key == 'len' {
+					len_expr = p.expr(0)
+				}
 			}
+			p.check(.rcur)
 		}
-		p.check(.rcur)
 	} else {
 		for p.tok.kind !in [.rbr, .eof] {
 			exprs << p.expr(0)
@@ -126,6 +134,27 @@ fn (mut p Parser) call_args() []ast.CallArg {
 	return args
 }
 
+fn (mut p Parser) cast_expr(has_amp bool) ast.CastExpr {
+	mut target_type := p.parse_type()
+	if has_amp {
+		target_type.set_nr_amp(1)
+	}
+	p.check(.lpar)
+	expr := p.expr(0)
+	p.check(.rpar)
+	return ast.CastExpr{
+		target_type: target_type
+		expr: expr
+	}
+}
+
+fn (mut p Parser) char_literal() ast.CharLiteral {
+	p.next()
+	return ast.CharLiteral{
+		val: p.prev_tok.lit
+	}
+}
+
 fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	p.check(.dot)
 	name := p.check_name()
@@ -171,6 +200,16 @@ fn (mut p Parser) if_expr() ast.IfExpr {
 	}
 }
 
+fn (mut p Parser) index_expr(left ast.Expr) ast.IndexExpr {
+	p.check(.lbr)
+	index := p.expr(0)
+	p.check(.rbr)
+	return ast.IndexExpr{
+		left: left
+		index: index
+	}
+}
+
 fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	op := p.tok.kind
 	p.next()
@@ -205,6 +244,9 @@ fn (mut p Parser) name_expr() ast.Expr {
 		p.check(.dot)
 	}
 	if p.peek_tok.kind == .lpar {
+		if p.tok.lit in p.table.type_idxs {
+			return p.cast_expr(false)
+		}
 		return p.call_expr(lang)
 	} else if p.peek_tok.kind == .lcur && !p.inside_for {
 		return p.struct_init()

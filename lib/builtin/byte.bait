@@ -1,0 +1,8 @@
+package builtin
+
+fun (b []byte) string() string {
+	buf := malloc(b.len + 1)
+	C.memcpy(buf, b.data, b.len)
+	buf[b.len] = 0
+	return buf.string_with_len(b.len)
+}

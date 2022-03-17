@@ -6,10 +6,28 @@ struct array {
 	len i32
 }
 
-fun new_array(len int, elem_size int)array{
+fun new_array(len i32, elem_size i32)array{
 	return array{
 		elem_size: elem_size
 		data: calloc(len * elem_size)
 		len: len
+	}
+}
+
+fun (a &array) set(i i32, val &void) {
+	C.memcpy(a.data + i * a.elem_size, val, a.elem_size)
+}
+
+fun (a array) get(i i32) &void {
+	return a.data + i * a.elem_size
+}
+
+fun (a array) slice(start i32, end i32) array {
+	data := &byte(a.data) + start * a.elem_size
+	len := end - start
+	return array{
+		elem_size: a.elem_size
+		data: data
+		len:len
 	}
 }

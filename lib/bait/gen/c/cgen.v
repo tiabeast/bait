@@ -3,7 +3,7 @@ module c
 import strings
 import lib.bait.ast
 
-const c_reserved = ['main', 'calloc']
+const c_reserved = ['calloc', 'main', 'malloc']
 
 const builtin_struct_types = ['array', 'string']
 
@@ -15,6 +15,8 @@ mut:
 	indent                  int
 	empty_line              bool
 	inside_for_classic_loop bool
+	is_assign_left_side     bool
+	is_array_set            bool
 	cheaders                strings.Builder
 	type_defs               strings.Builder
 	type_impls              strings.Builder
@@ -131,8 +133,11 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.ArrayInit { g.array_init(node) }
 		ast.BoolLiteral { g.bool_literal(node) }
 		ast.CallExpr { g.call_expr(node) }
+		ast.CastExpr { g.cast_expr(node) }
+		ast.CharLiteral { g.char_literal(node) }
 		ast.Ident { g.ident(node) }
 		ast.IfExpr { g.if_expr(node) }
+		ast.IndexExpr { g.index_expr(node) }
 		ast.InfixExpr { g.infix_expr(node) }
 		ast.PrefixExpr { g.prefix_expr(node) }
 		ast.IntegerLiteral { g.integer_literal(node) }
@@ -155,7 +160,16 @@ fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 		typ := g.typ(node.right_type)
 		g.write('$typ ')
 	}
+	g.is_assign_left_side = true
 	g.expr(node.left)
+	g.is_assign_left_side = false
+	if g.is_array_set {
+		g.write('{')
+		g.expr(node.right)
+		g.writeln('});')
+		g.is_array_set = false
+		return
+	}
 	if node.op.is_math_assign() {
 		g.write(' $node.op ')
 	} else {
@@ -199,7 +213,7 @@ fn (mut g Gen) fun_decl(node ast.FunDecl) {
 	mut name := c_name(node.name)
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.params[0].typ)
-		name = '${sym.name}_$name'
+		name = c_name('${sym.name}_$name')
 	}
 	type_name := g.typ(node.return_type)
 	s := '$type_name ${name}('
@@ -260,13 +274,14 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 	}
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.receiver_type)
-		name = '${sym.name}_$name'
+		if sym.kind == .array && name in ['slice'] {
+			name = c_name('array_$name')
+		} else {
+			name = c_name('${sym.name}_$name')
+		}
 	}
 	g.write('${name}(')
 	if node.is_method {
-		if node.receiver_type.nr_amps() > 0 {
-			g.write('&')
-		}
 		g.expr(node.receiver)
 		if node.args.len > 0 {
 			g.write(', ')
@@ -286,8 +301,23 @@ fn (mut g Gen) call_args(args []ast.CallArg) {
 	}
 }
 
+fn (mut g Gen) cast_expr(node ast.CastExpr) {
+	target_type_str := g.typ(node.target_type)
+	g.write('($target_type_str)')
+	g.expr(node.expr)
+}
+
+fn (mut g Gen) char_literal(node ast.CharLiteral) {
+	g.write("'$node.val'")
+}
+
 fn (mut g Gen) ident(node ast.Ident) {
-	name := c_name(node.name)
+	mut name := node.name
+	if node.kind == .constant {
+		name = 'CONST_$name'
+	} else {
+		name = c_name(name)
+	}
 	g.write(name)
 }
 
@@ -298,6 +328,39 @@ fn (mut g Gen) if_expr(node ast.IfExpr) {
 		g.writeln(') {')
 		g.stmts(b.stmts)
 		g.writeln('}')
+	}
+}
+
+fn (mut g Gen) index_expr(node ast.IndexExpr) {
+	sym := g.table.get_type_symbol(node.left_type)
+	if sym.kind == .array {
+		info := sym.info as ast.ArrayInfo
+		elem_type_str := g.typ(info.elem_type)
+		if g.is_assign_left_side {
+			g.is_array_set = true
+			g.write('array_set(&')
+			g.expr(node.left)
+			g.write(', ')
+			g.expr(node.index)
+			g.write(', ($elem_type_str[])')
+		} else {
+			g.write('(*($elem_type_str*)(array_get(&')
+			g.expr(node.left)
+			g.write(', ')
+			g.expr(node.index)
+			g.write(')))')
+		}
+	} else if sym.kind == .string {
+		g.write('string_at(')
+		g.expr(node.left)
+		g.write(', ')
+		g.expr(node.index)
+		g.write(')')
+	} else {
+		g.expr(node.left)
+		g.write('[')
+		g.expr(node.index)
+		g.write(']')
 	}
 }
 
@@ -318,7 +381,11 @@ fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
 
 fn (mut g Gen) selector_expr(node ast.SelectorExpr) {
 	g.expr(node.expr)
-	g.write('.')
+	if node.expr_type.nr_amps() > 0 {
+		g.write('->')
+	} else {
+		g.write('.')
+	}
 	g.write(node.field_name)
 }
 

@@ -48,8 +48,11 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.ArrayInit { return c.array_init(mut node) }
 		ast.BoolLiteral { return ast.bool_type }
 		ast.CallExpr { return c.call_expr(mut node) }
-		ast.Ident { return c.ident(node) }
+		ast.CastExpr { return c.cast_expr(mut node) }
+		ast.CharLiteral { return ast.byte_type }
+		ast.Ident { return c.ident(mut node) }
 		ast.IfExpr { return c.if_expr(mut node) }
+		ast.IndexExpr { return c.index_expr(mut node) }
 		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
 		ast.PrefixExpr { return c.prefix_expr(mut node) }
@@ -77,7 +80,8 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 }
 
 fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
-	c.expr(mut node.expr)
+	typ := c.expr(mut node.expr)
+	c.table.global_scope.update_type(node.name, typ)
 }
 
 fn (mut c Checker) for_stmt(mut node ast.ForLoop) {
@@ -135,6 +139,11 @@ fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 	node.return_type = c.table.fns[node.name].return_type
 	if node.is_method {
 		node.receiver_type = c.expr(mut node.receiver)
+		rec_sym := c.table.get_type_symbol(node.receiver_type)
+		return_sym := c.table.get_type_symbol(node.return_type)
+		if rec_sym.kind == .array && return_sym.name == 'array' {
+			node.return_type = node.receiver_type
+		}
 	}
 	c.call_args(mut node.args)
 	return node.return_type
@@ -146,10 +155,21 @@ fn (mut c Checker) call_args(mut args []ast.CallArg) {
 	}
 }
 
-fn (mut c Checker) ident(node ast.Ident) ast.Type {
+fn (mut c Checker) cast_expr(mut node ast.CastExpr) ast.Type {
+	c.expr(mut node.expr)
+	return node.target_type
+}
+
+fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
 	obj := node.scope.find(node.name)
 	if obj.name.len > 0 {
+		node.kind = .variable
 		return obj.typ
+	}
+	gobj := c.table.global_scope.find(node.name)
+	if gobj.name.len > 0 {
+		node.kind = .constant
+		return gobj.typ
 	}
 	return ast.void_type
 }
@@ -160,6 +180,12 @@ fn (mut c Checker) if_expr(mut node ast.IfExpr) ast.Type {
 		c.stmts(mut b.stmts)
 	}
 	return ast.void_type
+}
+
+fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
+	node.left_type = c.expr(mut node.left)
+	c.expr(mut node.index)
+	return node.left_type
 }
 
 fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
@@ -174,8 +200,8 @@ fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {
 }
 
 fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
-	typ := c.expr(mut node.expr)
-	fsym := c.table.get_type_symbol(typ)
+	node.expr_type = c.expr(mut node.expr)
+	fsym := c.table.get_type_symbol(node.expr_type)
 	match fsym.info {
 		ast.ArrayInfo {
 			if node.field_name == 'len' {

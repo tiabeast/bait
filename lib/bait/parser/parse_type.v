@@ -8,6 +8,13 @@ fn (mut p Parser) parse_type() ast.Type {
 		nr_amp++
 		p.next()
 	}
+	if p.tok.kind == .lbr {
+		p.check(.lbr)
+		p.check(.rbr)
+		arr_type := p.parse_type()
+		idx := p.table.find_or_register_array(arr_type)
+		return ast.new_type(idx)
+	}
 	mut typ := ast.void_type
 	name := p.tok.lit
 	p.next()

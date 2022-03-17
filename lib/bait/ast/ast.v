@@ -15,9 +15,12 @@ pub type Stmt = AssignStmt
 pub type Expr = ArrayInit
 	| BoolLiteral
 	| CallExpr
+	| CastExpr
+	| CharLiteral
 	| EmptyExpr
 	| Ident
 	| IfExpr
+	| IndexExpr
 	| InfixExpr
 	| IntegerLiteral
 	| PrefixExpr
@@ -138,10 +141,29 @@ pub mut:
 	expr Expr
 }
 
+pub struct CastExpr {
+pub:
+	target_type Type
+pub mut:
+	expr Expr
+}
+
+pub struct CharLiteral {
+pub:
+	val string
+}
+
+pub enum IdentKind {
+	unresolved
+	variable
+	constant
+}
+
 pub struct Ident {
 pub:
 	name string
 pub mut:
+	kind  IdentKind
 	scope &Scope
 }
 
@@ -154,6 +176,13 @@ pub struct IfBranch {
 pub mut:
 	cond  Expr
 	stmts []Stmt
+}
+
+pub struct IndexExpr {
+pub mut:
+	index     Expr
+	left      Expr
+	left_type Type
 }
 
 pub struct InfixExpr {
@@ -183,8 +212,9 @@ pub struct SelectorExpr {
 pub:
 	field_name string
 pub mut:
-	expr       Expr
 	field_type Type
+	expr       Expr
+	expr_type  Type
 }
 
 pub struct StringLiteral {

@@ -6,10 +6,15 @@ pub mut:
 	fns          map[string]FunDecl
 	type_idxs    map[string]int
 	type_symbols []TypeSymbol
+	global_scope &Scope
 }
 
 pub fn new_table() &Table {
-	mut t := &Table{}
+	mut t := &Table{
+		global_scope: &Scope{
+			parent: 0
+		}
+	}
 	t.register_builtin_type_symbols()
 	return t
 }

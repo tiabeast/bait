@@ -5,7 +5,7 @@ pub type Type = int
 pub type TypeInfo = ArrayInfo | OtherInfo | StructInfo
 
 pub struct TypeSymbol {
-mut:
+pub mut:
 	kind TypeKind
 pub:
 	name string
@@ -87,6 +87,7 @@ pub fn (t Type) nr_amps() int {
 pub struct OtherInfo {}
 
 pub struct ArrayInfo {
+pub:
 	elem_type Type
 }
 

@@ -20,6 +20,10 @@ fun exit(code i32) {
 	C.exit(code)
 }
 
-fun calloc(n int) &byte {
+fun calloc(n i32) &byte {
 	return C.calloc(1, n)
+}
+
+fun malloc(n i32) &byte {
+	return C.malloc(n)
 }

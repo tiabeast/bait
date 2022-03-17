@@ -2,7 +2,14 @@ package builtin
 
 struct string{
 	str &byte
-	len int
+	len i32
+}
+
+fun (bp &byte) string_with_len(len int) string {
+	return string{
+		str: bp
+		len: len
+	}
 }
 
 fun (s string) to_lower()string{
@@ -10,4 +17,8 @@ fun (s string) to_lower()string{
 	for i := 0; i < s.len; i += 1 {
 	}
 	return s
+}
+
+fun (s string) at(i i32) byte {
+	return s.str[i]
 }

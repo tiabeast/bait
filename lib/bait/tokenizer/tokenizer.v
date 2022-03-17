@@ -58,6 +58,10 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				str := t.string_literal()
 				return t.new_token(.string, str)
 			}
+			`\`` {
+				val := t.char_literal()
+				return t.new_token(.char, val)
+			}
 			`+` {
 				if nextc == `=` {
 					t.pos++
@@ -190,6 +194,25 @@ fn (mut t Tokenizer) string_literal() string {
 		}
 		if c == `'` {
 			t.is_inside_string = false
+			break
+		}
+	}
+	return t.text[start_pos..t.pos]
+}
+
+fn (mut t Tokenizer) char_literal() string {
+	start_pos := t.pos + 1
+	for {
+		t.pos++
+		if t.pos >= t.text.len {
+			break
+		}
+		c := t.text[t.pos]
+		if c == `\\` {
+			t.pos++
+			continue
+		}
+		if c == `\`` {
 			break
 		}
 	}
