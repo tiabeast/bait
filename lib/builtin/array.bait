@@ -1,0 +1,15 @@
+package builtin
+
+struct array {
+	elem_size i32
+	data &void
+	len i32
+}
+
+fun new_array(len int, elem_size int)array{
+	return array{
+		elem_size: elem_size
+		data: calloc(len * elem_size)
+		len: len
+	}
+}

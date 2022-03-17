@@ -3,22 +3,23 @@ module c
 import strings
 import lib.bait.ast
 
-const c_reserved = ['main']
+const c_reserved = ['main', 'calloc']
 
-const builtin_struct_types = ['string']
+const builtin_struct_types = ['array', 'string']
 
 struct Gen {
 	table &ast.Table
 mut:
-	pkg_name   string
-	lang       ast.Language = .bait
-	indent     int
-	empty_line bool
-	cheaders   strings.Builder
-	type_defs  strings.Builder
-	type_impls strings.Builder
-	fun_decls  strings.Builder
-	out        strings.Builder
+	pkg_name                string
+	lang                    ast.Language = .bait
+	indent                  int
+	empty_line              bool
+	inside_for_classic_loop bool
+	cheaders                strings.Builder
+	type_defs               strings.Builder
+	type_impls              strings.Builder
+	fun_decls               strings.Builder
+	out                     strings.Builder
 }
 
 pub fn gen(files []&ast.File, table &ast.Table) string {
@@ -55,11 +56,27 @@ fn (mut g Gen) init() {
 		builtin_struct_syms << g.table.type_symbols[g.table.type_idxs[bst]]
 	}
 	g.write_types(builtin_struct_syms)
+	g.write_other_types()
+}
+
+fn (mut g Gen) write_other_types() {
+	mut symbols := []ast.TypeSymbol{}
+	for tsym in g.table.type_symbols {
+		if tsym.name in c.builtin_struct_types {
+			continue
+		}
+		symbols << tsym
+	}
+	g.write_types(symbols)
 }
 
 fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 	for tsym in type_syms {
+		cname := c_name(tsym.name)
 		match tsym.info {
+			ast.ArrayInfo {
+				g.type_defs.writeln('typedef array $cname;')
+			}
 			ast.StructInfo {
 				g.type_defs.writeln('typedef struct $tsym.name $tsym.name;')
 				g.type_impls.writeln('struct $tsym.name {')
@@ -92,12 +109,12 @@ fn (mut g Gen) stmts(stmts []ast.Stmt) {
 
 fn (mut g Gen) stmt(node ast.Stmt) {
 	match node {
-		ast.EmptyStmt {}
-		ast.AsssignStmt { g.assign_stmt(node) }
+		ast.EmptyStmt { panic('found empty stmt') }
+		ast.AssignStmt { g.assign_stmt(node) }
 		ast.ConstDecl { g.const_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
-		ast.ForStmt { g.for_stmt(node) }
-		ast.ForClassicStmt { g.for_classic_stmt(node) }
+		ast.ForLoop { g.for_loop(node) }
+		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
@@ -110,7 +127,8 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 
 fn (mut g Gen) expr(node ast.Expr) {
 	match node {
-		ast.EmptyExpr {}
+		ast.EmptyExpr { panic('found empty expr') }
+		ast.ArrayInit { g.array_init(node) }
 		ast.BoolLiteral { g.bool_literal(node) }
 		ast.CallExpr { g.call_expr(node) }
 		ast.Ident { g.ident(node) }
@@ -120,6 +138,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.SelectorExpr { g.selector_expr(node) }
 		ast.StringLiteral { g.string_literal(node) }
+		ast.StructInit { g.struct_init(node) }
 	}
 }
 
@@ -130,20 +149,22 @@ fn (mut g Gen) expr_string(node ast.Expr) string {
 	return expr_str.trim_space()
 }
 
-fn (mut g Gen) assign_stmt(node ast.AsssignStmt) {
+fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 	is_decl := node.op == .decl_assign
 	if is_decl {
 		typ := g.typ(node.right_type)
 		g.write('$typ ')
 	}
 	g.expr(node.left)
-	if node.op.is_math_assign(){
+	if node.op.is_math_assign() {
 		g.write(' $node.op ')
-	}else{
+	} else {
 		g.write(' = ')
 	}
 	g.expr(node.right)
-	g.writeln(';')
+	if !g.inside_for_classic_loop {
+		g.writeln(';')
+	}
 }
 
 fn (mut g Gen) const_decl(node ast.ConstDecl) {
@@ -152,9 +173,27 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 	g.type_impls.writeln('#define CONST_$name $val')
 }
 
-fn (mut g Gen) for_stmt(node ast.ForStmt) {}
+fn (mut g Gen) for_loop(node ast.ForLoop) {
+	g.write('while (')
+	g.expr(node.cond)
+	g.writeln(') {')
+	g.stmts(node.stmts)
+	g.writeln('}')
+}
 
-fn (mut g Gen) for_classic_stmt(node ast.ForClassicStmt) {}
+fn (mut g Gen) for_classic_loop(node ast.ForClassicLoop) {
+	g.inside_for_classic_loop = true
+	g.write('for (')
+	g.stmt(node.init)
+	g.write('; ')
+	g.expr(node.cond)
+	g.write('; ')
+	g.stmt(node.inc)
+	g.writeln(') {')
+	g.stmts(node.stmts)
+	g.writeln('}')
+	g.inside_for_classic_loop = false
+}
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
 	mut name := c_name(node.name)
@@ -197,6 +236,18 @@ fn (mut g Gen) return_stmt(node ast.Return) {
 	g.writeln(';')
 }
 
+fn (mut g Gen) array_init(node ast.ArrayInit) {
+	elem_type := g.typ(node.elem_type)
+	g.write('new_array(')
+	if node.len_expr is ast.EmptyExpr {
+		g.write('0, ')
+	} else {
+		g.expr(node.len_expr)
+		g.write(', ')
+	}
+	g.write('sizeof($elem_type))')
+}
+
 fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
 	g.write('$node.val')
 }
@@ -204,6 +255,9 @@ fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
 fn (mut g Gen) call_expr(node ast.CallExpr) {
 	g.lang = node.lang
 	mut name := c_name(node.name)
+	if node.lang == .c {
+		name = node.name
+	}
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.receiver_type)
 		name = '${sym.name}_$name'
@@ -276,10 +330,25 @@ fn (mut g Gen) string_literal(node ast.StringLiteral) {
 	}
 }
 
+fn (mut g Gen) struct_init(node ast.StructInit) {
+	typ := g.typ(node.typ)
+	g.write('($typ){')
+	for i, field in node.fields {
+		name := c_name(field.name)
+		g.write('.$name = ')
+		g.expr(field.expr)
+		if i < node.fields.len - 1 {
+			g.write(', ')
+		}
+	}
+	g.write('}')
+}
+
 fn (mut g Gen) typ(typ ast.Type) string {
 	sym := g.table.get_type_symbol(typ)
 	muls := '*'.repeat(typ.nr_amps())
-	return '$sym.name$muls'
+	cname := c_name(sym.name)
+	return '$cname$muls'
 }
 
 fn (mut g Gen) write(s string) {
@@ -299,7 +368,7 @@ fn (mut g Gen) writeln(s string) {
 }
 
 fn c_name(n string) string {
-	name := n.replace('.', '__')
+	name := n.replace('.', '__').replace('[]', 'Array_')
 	if name in c.c_reserved {
 		return 'bait_$name'
 	}

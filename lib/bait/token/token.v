@@ -26,10 +26,14 @@ pub enum Kind {
 	mod_assign // %=
 	lpar // (
 	rpar // )
+	lbr // [
+	rbr // ]
 	lcur // {
 	rcur // }
 	dot // .
 	comma // ,
+	colon // :
+	semicolon // ;
 	amp // &
 	eq // ==
 	lt // <
@@ -70,7 +74,7 @@ pub enum Precedence {
 const precedences = build_precedences()
 
 fn build_precedences() []Precedence {
-	mut p := []Precedence{len: int(Kind.key_struct)}
+	mut p := []Precedence{len: int(Kind.key_true) + 1}
 	p[Kind.dot] = .call
 	// * / %
 	p[Kind.mul] = .product
@@ -92,27 +96,53 @@ pub fn (t Token) precedence() int {
 	return int(token.precedences[t.kind])
 }
 
-pub fn (k Kind)is_math_assign()bool{
+pub fn (k Kind) is_math_assign() bool {
 	return k in [.plus_assign, .minus_assign, .mul_assign, .div_assign, .mod_assign]
 }
 
 pub fn (k Kind) str() string {
 	return match k {
-		.plus_assign { '+=' }
-		.minus_assign { '-=' }
-		.mul_assign { '*=' }
-		.div_assign { '/=' }
-		.mod_assign { '%=' }
+		.unknown { 'unknown' }
+		.eof { 'eof' }
+		.name { 'name' }
+		.string { 'string' }
+		.number { 'number' }
 		.plus { '+' }
 		.minus { '-' }
 		.mul { '*' }
 		.div { '/' }
 		.mod { '%' }
+		.assign { '=' }
+		.decl_assign { ':=' }
+		.plus_assign { '+=' }
+		.minus_assign { '-=' }
+		.mul_assign { '*=' }
+		.div_assign { '/=' }
+		.mod_assign { '%=' }
+		.lpar { '(' }
+		.rpar { ')' }
+		.lbr { '[' }
+		.rbr { ']' }
+		.lcur { '{' }
+		.rcur { '}' }
+		.dot { '.' }
+		.comma { ',' }
+		.colon { ':' }
+		.semicolon { ';' }
+		.amp { '&' }
 		.eq { '==' }
 		.lt { '<' }
 		.gt { '>' }
 		.le { '<=' }
 		.ge { '>=' }
-		else { 'TODO' }
+		.key_const { 'const' }
+		.key_false { 'false' }
+		.key_for { 'for' }
+		.key_fun { 'fun' }
+		.key_if { 'if' }
+		.key_package { 'package' }
+		.key_return { 'return' }
+		.key_struct { 'struct' }
+		.key_true { 'true' }
 	}
 }

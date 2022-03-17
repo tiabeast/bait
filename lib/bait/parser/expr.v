@@ -18,6 +18,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.name {
 			node = p.name_expr()
 		}
+		.lbr {
+			node = p.array_init()
+		}
 		.string {
 			node = p.string_literal()
 		}
@@ -46,6 +49,47 @@ fn (mut p Parser) expr_with_left(left ast.Expr, precedence int) ast.Expr {
 		}
 	}
 	return node
+}
+
+fn (mut p Parser) array_init() ast.ArrayInit {
+	mut exprs := []ast.Expr{}
+	mut elem_type := ast.void_type
+	mut arr_type := ast.void_type
+	mut len_expr := ast.empty_expr()
+	p.check(.lbr)
+	if p.tok.kind == .rbr {
+		p.next()
+		if p.tok.kind == .name {
+			elem_type = p.parse_type()
+			idx := p.table.find_or_register_array(elem_type)
+			arr_type = ast.new_type(idx)
+		}
+		if p.tok.kind == .lcur {
+			p.next()
+		}
+		for p.tok.kind != .rcur {
+			key := p.check_name()
+			p.check(.colon)
+			if key == 'len' {
+				len_expr = p.expr(0)
+			}
+		}
+		p.check(.rcur)
+	} else {
+		for p.tok.kind !in [.rbr, .eof] {
+			exprs << p.expr(0)
+			if p.tok.kind == .comma {
+				p.next()
+			}
+		}
+		p.check(.rbr)
+	}
+	return ast.ArrayInit{
+		exprs: exprs
+		arr_type: arr_type
+		elem_type: elem_type
+		len_expr: len_expr
+	}
 }
 
 fn (mut p Parser) bool_literal() ast.BoolLiteral {
@@ -162,6 +206,8 @@ fn (mut p Parser) name_expr() ast.Expr {
 	}
 	if p.peek_tok.kind == .lpar {
 		return p.call_expr(lang)
+	} else if p.peek_tok.kind == .lcur && !p.inside_for {
+		return p.struct_init()
 	}
 	return p.ident()
 }
@@ -181,5 +227,25 @@ fn (mut p Parser) string_literal() ast.StringLiteral {
 	p.next()
 	return ast.StringLiteral{
 		val: val
+	}
+}
+
+fn (mut p Parser) struct_init() ast.StructInit {
+	typ := p.parse_type()
+	p.check(.lcur)
+	mut fields := []ast.StructInitField{}
+	for p.tok.kind != .rcur {
+		name := p.check_name()
+		p.check(.colon)
+		expr := p.expr(0)
+		fields << ast.StructInitField{
+			name: name
+			expr: expr
+		}
+	}
+	p.check(.rcur)
+	return ast.StructInit{
+		typ: typ
+		fields: fields
 	}
 }

@@ -39,6 +39,23 @@ pub fn (mut t Table) register_type_symbol(sym TypeSymbol) int {
 	return new_idx
 }
 
+pub fn (mut t Table) find_or_register_array(elem_type Type) int {
+	sym := t.get_type_symbol(elem_type)
+	name := '[]$sym.name'
+	idx := t.type_idxs[name]
+	if idx > 0 {
+		return idx
+	}
+	arr_type_sym := TypeSymbol{
+		kind: .array
+		name: name
+		info: ArrayInfo{
+			elem_type: elem_type
+		}
+	}
+	return t.register_type_symbol(arr_type_sym)
+}
+
 pub fn (mut t Table) add_placeholder_type(name string) int {
 	tsym := TypeSymbol{
 		kind: .placeholder

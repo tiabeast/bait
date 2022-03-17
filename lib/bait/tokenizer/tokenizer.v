@@ -103,17 +103,17 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				}
 				return t.new_token(.assign, '')
 			}
-			`:` {
-				if nextc == `=` {
-					t.pos++
-					return t.new_token(.decl_assign, '')
-				}
-			}
 			`(` {
 				return t.new_token(.lpar, '')
 			}
 			`)` {
 				return t.new_token(.rpar, '')
+			}
+			`[` {
+				return t.new_token(.lbr, '')
+			}
+			`]` {
+				return t.new_token(.rbr, '')
 			}
 			`{` {
 				return t.new_token(.lcur, '')
@@ -126,6 +126,16 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 			}
 			`,` {
 				return t.new_token(.comma, '')
+			}
+			`:` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.decl_assign, '')
+				}
+				return t.new_token(.colon, '')
+			}
+			`;` {
+				return t.new_token(.semicolon, '')
 			}
 			`&` {
 				return t.new_token(.amp, '')
@@ -194,7 +204,9 @@ fn (mut t Tokenizer) number_literal() string {
 		}
 		t.pos++
 	}
-	return t.text[start_pos..t.pos]
+	lit := t.text[start_pos..t.pos]
+	t.pos--
+	return lit
 }
 
 fn (t Tokenizer) new_token(kind token.Kind, lit string) token.Token {

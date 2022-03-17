@@ -19,3 +19,7 @@ fun eprintln(s string) {
 fun exit(code i32) {
 	C.exit(code)
 }
+
+fun calloc(n int) &byte {
+	return C.calloc(1, n)
+}

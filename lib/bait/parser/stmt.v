@@ -5,6 +5,7 @@ import lib.bait.ast
 fn (mut p Parser) stmt() ast.Stmt {
 	match p.tok.kind {
 		.name { return p.assign_or_expr_stmt() }
+		.key_for { return p.for_stmt() }
 		.key_return { return p.return_stmt() }
 		else { return p.expr_stmt() }
 	}
@@ -22,15 +23,15 @@ fn (mut p Parser) top_level_stmt() ast.Stmt {
 
 fn (mut p Parser) assign_or_expr_stmt() ast.Stmt {
 	left := p.expr(0)
-	if p.tok.kind in [.assign, .decl_assign]||p.tok.kind.is_math_assign(){
-		return p.assign_stmt(left)
+	if p.tok.kind in [.assign, .decl_assign] || p.tok.kind.is_math_assign() {
+		return p.partial_assign_stmt(left)
 	}
 	return ast.ExprStmt{
 		expr: left
 	}
 }
 
-fn (mut p Parser) assign_stmt(left ast.Expr) ast.AsssignStmt {
+fn (mut p Parser) partial_assign_stmt(left ast.Expr) ast.AssignStmt {
 	op := p.tok.kind
 	p.next()
 	right := p.expr(0)
@@ -39,7 +40,7 @@ fn (mut p Parser) assign_stmt(left ast.Expr) ast.AsssignStmt {
 			p.scope.register(ast.ScopeObject{ name: left.name })
 		}
 	}
-	return ast.AsssignStmt{
+	return ast.AssignStmt{
 		op: op
 		left: left
 		right: right
@@ -61,6 +62,34 @@ fn (mut p Parser) expr_stmt() ast.ExprStmt {
 	return ast.ExprStmt{
 		expr: p.expr(0)
 	}
+}
+
+fn (mut p Parser) for_stmt() ast.Stmt {
+	p.check(.key_for)
+	p.inside_for = true
+	p.open_scope()
+	if p.peek_tok.kind == .decl_assign {
+		init := p.assign_or_expr_stmt()
+		p.check(.semicolon)
+		cond := p.expr(0)
+		p.check(.semicolon)
+		inc := p.stmt()
+		stmts := p.parse_block_no_scope()
+		return ast.ForClassicLoop{
+			init: init
+			cond: cond
+			inc: inc
+			stmts: stmts
+		}
+	} else {
+		cond := p.expr(0)
+		stmts := p.parse_block_no_scope()
+		return ast.ForLoop{
+			cond: cond
+			stmts: stmts
+		}
+	}
+	p.inside_for = false
 }
 
 fn (mut p Parser) fun_decl() ast.FunDecl {

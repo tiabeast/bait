@@ -2,17 +2,18 @@ module ast
 
 import lib.bait.token
 
-pub type Stmt = AsssignStmt
+pub type Stmt = AssignStmt
 	| ConstDecl
 	| EmptyStmt
 	| ExprStmt
-	| ForClassicStmt
-	| ForStmt
+	| ForClassicLoop
+	| ForLoop
 	| FunDecl
 	| PackageDecl
 	| Return
 	| StructDecl
-pub type Expr = BoolLiteral
+pub type Expr = ArrayInit
+	| BoolLiteral
 	| CallExpr
 	| EmptyExpr
 	| Ident
@@ -22,6 +23,7 @@ pub type Expr = BoolLiteral
 	| PrefixExpr
 	| SelectorExpr
 	| StringLiteral
+	| StructInit
 
 pub struct EmptyStmt {}
 
@@ -31,7 +33,7 @@ pub fn empty_expr() Expr {
 	return EmptyExpr{}
 }
 
-pub struct AsssignStmt {
+pub struct AssignStmt {
 pub:
 	op token.Kind
 pub mut:
@@ -53,14 +55,14 @@ pub mut:
 }
 
 // for cond {}
-pub struct ForStmt {
+pub struct ForLoop {
 pub mut:
 	cond  Expr
 	stmts []Stmt
 }
 
 // for i := 0; i < 10; i += 1 {}
-pub struct ForClassicStmt {
+pub struct ForClassicLoop {
 pub mut:
 	init  Stmt
 	cond  Expr
@@ -95,12 +97,22 @@ pub mut:
 }
 
 pub struct StructDecl {
+	name   string
+	fields []StructField
 }
 
 pub struct StructField {
 pub:
 	name string
 	typ  Type
+}
+
+pub struct ArrayInit {
+pub mut:
+	exprs     []Expr
+	arr_type  Type
+	elem_type Type
+	len_expr  Expr
 }
 
 pub struct BoolLiteral {
@@ -178,6 +190,22 @@ pub mut:
 pub struct StringLiteral {
 pub:
 	val string
+}
+
+pub struct StructInit {
+pub:
+	typ    Type
+	fields []StructInitField
+}
+
+pub struct StructInitField {
+pub mut:
+	expr Expr
+	typ  Type
+pub:
+	name string
+
+	exp_type Type
 }
 
 [heap]

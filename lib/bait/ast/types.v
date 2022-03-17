@@ -2,7 +2,7 @@ module ast
 
 pub type Type = int
 
-pub type TypeInfo = OtherInfo | StructInfo
+pub type TypeInfo = ArrayInfo | OtherInfo | StructInfo
 
 pub struct TypeSymbol {
 mut:
@@ -22,6 +22,7 @@ pub enum TypeKind {
 	i64
 	bool
 	string
+	array
 	struct_
 }
 
@@ -84,6 +85,10 @@ pub fn (t Type) nr_amps() int {
 }
 
 pub struct OtherInfo {}
+
+pub struct ArrayInfo {
+	elem_type Type
+}
 
 pub struct StructInfo {
 pub:
