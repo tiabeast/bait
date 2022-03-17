@@ -171,7 +171,7 @@ fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 		return
 	}
 	if node.op.is_math_assign() {
-		g.write(' $node.op ')
+		g.write(' $node.op.cstr() ')
 	} else {
 		g.write(' = ')
 	}
@@ -203,10 +203,10 @@ fn (mut g Gen) for_classic_loop(node ast.ForClassicLoop) {
 	g.expr(node.cond)
 	g.write('; ')
 	g.stmt(node.inc)
+	g.inside_for_classic_loop = false
 	g.writeln(') {')
 	g.stmts(node.stmts)
 	g.writeln('}')
-	g.inside_for_classic_loop = false
 }
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
@@ -245,8 +245,11 @@ fn (mut g Gen) package_decl(node ast.PackageDecl) {
 }
 
 fn (mut g Gen) return_stmt(node ast.Return) {
-	g.write('return ')
-	g.expr(node.expr)
+	g.write('return')
+	if node.expr !is ast.EmptyExpr {
+		g.write(' ')
+		g.expr(node.expr)
+	}
 	g.writeln(';')
 }
 
@@ -257,6 +260,12 @@ fn (mut g Gen) array_init(node ast.ArrayInit) {
 		g.write('0, ')
 	} else {
 		g.expr(node.len_expr)
+		g.write(', ')
+	}
+	if node.cap_expr is ast.EmptyExpr {
+		g.write('0, ')
+	} else {
+		g.expr(node.cap_expr)
 		g.write(', ')
 	}
 	g.write('sizeof($elem_type))')
@@ -274,8 +283,11 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 	}
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.receiver_type)
-		if sym.kind == .array && name in ['slice'] {
+		if sym.kind == .array && name == 'slice' {
 			name = c_name('array_$name')
+		} else if sym.kind == .array && name == 'push' {
+			g.gen_array_push(node, sym)
+			return
 		} else {
 			name = c_name('${sym.name}_$name')
 		}
@@ -301,6 +313,16 @@ fn (mut g Gen) call_args(args []ast.CallArg) {
 	}
 }
 
+fn (mut g Gen) gen_array_push(node ast.CallExpr, sym ast.TypeSymbol) {
+	info := sym.info as ast.ArrayInfo
+	elem_type_str := g.typ(info.elem_type)
+	g.write('array_push(&')
+	g.expr(node.receiver)
+	g.write(', ($elem_type_str[]){')
+	g.expr(node.args[0].expr)
+	g.write('})')
+}
+
 fn (mut g Gen) cast_expr(node ast.CastExpr) {
 	target_type_str := g.typ(node.target_type)
 	g.write('($target_type_str)')
@@ -322,13 +344,20 @@ fn (mut g Gen) ident(node ast.Ident) {
 }
 
 fn (mut g Gen) if_expr(node ast.IfExpr) {
-	for b in node.branches {
-		g.write('if (')
-		g.expr(b.cond)
-		g.writeln(') {')
+	for i, b in node.branches {
+		if i > 0 {
+			g.write('} else ')
+		}
+		if node.has_else && i == node.branches.len - 1 {
+			g.writeln('{')
+		} else {
+			g.write('if (')
+			g.expr(b.cond)
+			g.writeln(') {')
+		}
 		g.stmts(b.stmts)
-		g.writeln('}')
 	}
+	g.writeln('}')
 }
 
 fn (mut g Gen) index_expr(node ast.IndexExpr) {
@@ -344,7 +373,7 @@ fn (mut g Gen) index_expr(node ast.IndexExpr) {
 			g.expr(node.index)
 			g.write(', ($elem_type_str[])')
 		} else {
-			g.write('(*($elem_type_str*)(array_get(&')
+			g.write('(*($elem_type_str*)(array_get(')
 			g.expr(node.left)
 			g.write(', ')
 			g.expr(node.index)
@@ -365,8 +394,22 @@ fn (mut g Gen) index_expr(node ast.IndexExpr) {
 }
 
 fn (mut g Gen) infix_expr(node ast.InfixExpr) {
+	if node.left_type == ast.string_type {
+		if node.op in [.eq, .ne] {
+			if node.op == .ne {
+				g.write('!')
+			}
+
+			g.write('string_eq(')
+			g.expr(node.left)
+			g.write(', ')
+			g.expr(node.right)
+			g.write(')')
+			return
+		}
+	}
 	g.expr(node.left)
-	g.write(' $node.op ')
+	g.write(' $node.op.cstr() ')
 	g.expr(node.right)
 }
 
@@ -375,13 +418,13 @@ fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
-	g.write(node.op.str())
+	g.write(node.op.cstr())
 	g.expr(node.right)
 }
 
 fn (mut g Gen) selector_expr(node ast.SelectorExpr) {
 	g.expr(node.expr)
-	if node.expr_type.nr_amps() > 0 {
+	if node.expr_type.nr_amp() > 0 {
 		g.write('->')
 	} else {
 		g.write('.')
@@ -413,7 +456,7 @@ fn (mut g Gen) struct_init(node ast.StructInit) {
 
 fn (mut g Gen) typ(typ ast.Type) string {
 	sym := g.table.get_type_symbol(typ)
-	muls := '*'.repeat(typ.nr_amps())
+	muls := '*'.repeat(typ.nr_amp())
 	cname := c_name(sym.name)
 	return '$cname$muls'
 }

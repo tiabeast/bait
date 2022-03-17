@@ -4,6 +4,7 @@ pub struct Token {
 pub:
 	kind Kind
 	lit  string
+	pos  Position
 }
 
 pub enum Kind {
@@ -37,15 +38,19 @@ pub enum Kind {
 	semicolon // ;
 	amp // &
 	eq // ==
+	ne // !=
 	lt // <
 	gt // >
 	le // <=
 	ge // >=
+	key_and
 	key_const
+	key_else
 	key_false
 	key_for
 	key_fun
 	key_if
+	key_or
 	key_package
 	key_return
 	key_struct
@@ -53,11 +58,14 @@ pub enum Kind {
 }
 
 pub const keywords = {
+	'and':     Kind.key_and
 	'const':   Kind.key_const
+	'else':    Kind.key_else
 	'false':   Kind.key_false
 	'for':     Kind.key_for
 	'fun':     Kind.key_fun
 	'if':      Kind.key_if
+	'or':      Kind.key_or
 	'package': Kind.key_package
 	'return':  Kind.key_return
 	'struct':  Kind.key_struct
@@ -66,6 +74,7 @@ pub const keywords = {
 
 pub enum Precedence {
 	lowest
+	cond
 	compare
 	sum
 	product
@@ -86,12 +95,16 @@ fn build_precedences() []Precedence {
 	// + -
 	p[Kind.plus] = .sum
 	p[Kind.minus] = .sum
-	// == < > <= >=
+	// == != < > <= >=
 	p[Kind.eq] = .compare
+	p[Kind.ne] = .compare
 	p[Kind.lt] = .compare
 	p[Kind.gt] = .compare
 	p[Kind.le] = .compare
 	p[Kind.ge] = .compare
+	// and or
+	p[Kind.key_and] = .cond
+	p[Kind.key_or] = .cond
 	return p
 }
 
@@ -103,14 +116,8 @@ pub fn (k Kind) is_math_assign() bool {
 	return k in [.plus_assign, .minus_assign, .mul_assign, .div_assign, .mod_assign]
 }
 
-pub fn (k Kind) str() string {
+pub fn (k Kind) cstr() string {
 	return match k {
-		.unknown { 'unknown' }
-		.eof { 'eof' }
-		.name { 'name' }
-		.string { 'string' }
-		.char { 'char' }
-		.number { 'number' }
 		.plus { '+' }
 		.minus { '-' }
 		.mul { '*' }
@@ -123,30 +130,14 @@ pub fn (k Kind) str() string {
 		.mul_assign { '*=' }
 		.div_assign { '/=' }
 		.mod_assign { '%=' }
-		.lpar { '(' }
-		.rpar { ')' }
-		.lbr { '[' }
-		.rbr { ']' }
-		.lcur { '{' }
-		.rcur { '}' }
-		.dot { '.' }
-		.comma { ',' }
-		.colon { ':' }
-		.semicolon { ';' }
-		.amp { '&' }
 		.eq { '==' }
+		.ne { '!=' }
 		.lt { '<' }
 		.gt { '>' }
 		.le { '<=' }
 		.ge { '>=' }
-		.key_const { 'const' }
-		.key_false { 'false' }
-		.key_for { 'for' }
-		.key_fun { 'fun' }
-		.key_if { 'if' }
-		.key_package { 'package' }
-		.key_return { 'return' }
-		.key_struct { 'struct' }
-		.key_true { 'true' }
+		.key_and { '&&' }
+		.key_or { '||' }
+		else { k.str() }
 	}
 }

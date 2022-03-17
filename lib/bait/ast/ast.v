@@ -116,6 +116,7 @@ pub mut:
 	arr_type  Type
 	elem_type Type
 	len_expr  Expr
+	cap_expr  Expr
 }
 
 pub struct BoolLiteral {
@@ -168,6 +169,8 @@ pub mut:
 }
 
 pub struct IfExpr {
+pub:
+	has_else bool
 pub mut:
 	branches []IfBranch
 }

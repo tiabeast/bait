@@ -13,12 +13,69 @@ fun (bp &byte) string_with_len(len int) string {
 }
 
 fun (s string) to_lower()string{
-	// TODO
+	buf := []byte{len: s.len}
 	for i := 0; i < s.len; i += 1 {
+		c := s[i]
+		if c >= `A` and c <= `Z` {
+			buf[i] = c + 32
+		} else {
+			buf[i] = c
+		}
 	}
-	return s
+	buf[s.len] = 0
+	return buf.string()
+}
+
+fun (s string) substr(start i32, end i32) string {
+	len := end -start
+	if len == s.len {
+		return s
+	}
+	res:=string{
+		str:malloc(len+1)
+		len:len
+	}
+	for i := 0; i < len; i+=1{
+		res.str[i] = s.str[start + i]
+	}
+	res.str[len] = 0
+	return res
+}
+
+fun (s string) split(sep string) []string {
+	res := []string
+	i := 0
+	if sep.len == 0 {
+		for i < s.len {
+			c := s[i]
+			res.push(c.ascii_str())
+			i += 1
+		}
+		return res
+	}
+	start := 0
+	for i < s.len {
+		is_sep := i + sep.len <= s.len and s.substr(i, i + sep.len) == sep
+		if is_sep {
+			val := s.substr(start, i)
+			res.push(val)
+			start = i + sep.len
+			i = start
+		} else {
+			i += 1
+		}
+	}
+	res.push(s.substr(start, s.len))
+	return res
 }
 
 fun (s string) at(i i32) byte {
 	return s.str[i]
+}
+
+fun string_eq (a string, b string) bool {
+	if a.len != b.len {
+		return false
+	}
+	return C.memcmp(a.str, b.str, a.len) == 0
 }

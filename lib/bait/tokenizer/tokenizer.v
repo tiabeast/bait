@@ -7,7 +7,7 @@ struct Tokenizer {
 	text string
 mut:
 	pos              int = -1
-	line_nr          int = -1
+	line_nr          int = 1
 	is_inside_string bool
 }
 
@@ -99,6 +99,12 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 					return t.new_token(.mod_assign, '')
 				}
 				return t.new_token(.mod, '')
+			}
+			`!` {
+				if nextc == `=` {
+					t.pos++
+					return t.new_token(.ne, '')
+				}
 			}
 			`=` {
 				if nextc == `=` {
@@ -236,6 +242,9 @@ fn (t Tokenizer) new_token(kind token.Kind, lit string) token.Token {
 	return token.Token{
 		kind: kind
 		lit: lit
+		pos: token.Position{
+			line_nr: t.line_nr
+		}
 	}
 }
 

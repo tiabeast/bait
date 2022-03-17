@@ -48,7 +48,8 @@ fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 	for precedence < p.tok.precedence() {
 		if p.tok.kind == .dot {
 			left = p.dot_expr(left)
-		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .lt, .gt, .le, .ge] {
+		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge,
+			.key_and, .key_or] {
 			return p.infix_expr(left)
 		} else if p.tok.kind == .lbr {
 			return p.index_expr(left)
@@ -64,6 +65,7 @@ fn (mut p Parser) array_init() ast.ArrayInit {
 	mut elem_type := ast.void_type
 	mut arr_type := ast.void_type
 	mut len_expr := ast.empty_expr()
+	mut cap_expr := ast.empty_expr()
 	p.check(.lbr)
 	if p.tok.kind == .rbr {
 		p.next()
@@ -79,6 +81,8 @@ fn (mut p Parser) array_init() ast.ArrayInit {
 				p.check(.colon)
 				if key == 'len' {
 					len_expr = p.expr(0)
+				} else if key == 'cap' {
+					cap_expr = p.expr(0)
 				}
 			}
 			p.check(.rcur)
@@ -97,6 +101,7 @@ fn (mut p Parser) array_init() ast.ArrayInit {
 		arr_type: arr_type
 		elem_type: elem_type
 		len_expr: len_expr
+		cap_expr: cap_expr
 	}
 }
 
@@ -185,17 +190,34 @@ fn (mut p Parser) ident() ast.Ident {
 
 fn (mut p Parser) if_expr() ast.IfExpr {
 	mut branches := []ast.IfBranch{}
+	mut has_else := false
 	for {
+		if p.tok.kind == .key_else {
+			p.next()
+			if p.tok.kind == .lcur {
+				has_else = true
+				stmts := p.parse_block_no_scope()
+				branches << ast.IfBranch{
+					stmts: stmts
+				}
+				break
+			}
+		}
 		p.check(.key_if)
+		p.inside_if_cond = true
 		cond := p.expr(0)
+		p.inside_if_cond = false
 		stmts := p.parse_block_no_scope()
 		branches << ast.IfBranch{
 			cond: cond
 			stmts: stmts
 		}
-		break
+		if p.tok.kind != .key_else {
+			break
+		}
 	}
 	return ast.IfExpr{
+		has_else: has_else
 		branches: branches
 	}
 }
@@ -248,7 +270,7 @@ fn (mut p Parser) name_expr() ast.Expr {
 			return p.cast_expr(false)
 		}
 		return p.call_expr(lang)
-	} else if p.peek_tok.kind == .lcur && !p.inside_for {
+	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
 		return p.struct_init()
 	}
 	return p.ident()

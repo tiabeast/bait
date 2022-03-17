@@ -80,7 +80,7 @@ pub fn (t Type) set_nr_amp(nr int) Type {
 	return int(t) & 0xfff0ffff | (nr << 16)
 }
 
-pub fn (t Type) nr_amps() int {
+pub fn (t Type) nr_amp() int {
 	return (int(t) >> 16) & 0xf
 }
 

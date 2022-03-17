@@ -105,7 +105,9 @@ fn (mut c Checker) package_decl(node ast.PackageDecl) {
 }
 
 fn (mut c Checker) return_stmt(mut node ast.Return) {
-	c.expr(mut node.expr)
+	if node.expr !is ast.EmptyExpr {
+		c.expr(mut node.expr)
+	}
 }
 
 fn (mut c Checker) struct_decl(node ast.StructDecl) {
@@ -185,6 +187,13 @@ fn (mut c Checker) if_expr(mut node ast.IfExpr) ast.Type {
 fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 	node.left_type = c.expr(mut node.left)
 	c.expr(mut node.index)
+	sym := c.table.get_type_symbol(node.left_type)
+	if sym.kind == .array {
+		return (sym.info as ast.ArrayInfo).elem_type
+	}
+	if sym.kind == .string {
+		return ast.byte_type
+	}
 	return node.left_type
 }
 

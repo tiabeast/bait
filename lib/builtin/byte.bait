@@ -1,5 +1,16 @@
 package builtin
 
+fun (b byte) ascii_str() string {
+	s := string{
+		str: malloc(2)
+		len: 1
+	}
+
+	s.str[0] = b
+	s.str[1] = 0
+	return s
+}
+
 fun (b []byte) string() string {
 	buf := malloc(b.len + 1)
 	C.memcpy(buf, b.data, b.len)

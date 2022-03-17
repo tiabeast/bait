@@ -67,7 +67,7 @@ fn (mut p Parser) expr_stmt() ast.ExprStmt {
 
 fn (mut p Parser) for_stmt() ast.Stmt {
 	p.check(.key_for)
-	p.inside_for = true
+	p.inside_for_cond = true
 	p.open_scope()
 	if p.peek_tok.kind == .decl_assign {
 		init := p.assign_or_expr_stmt()
@@ -75,6 +75,7 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 		cond := p.expr(0)
 		p.check(.semicolon)
 		inc := p.stmt()
+		p.inside_for_cond = false
 		stmts := p.parse_block_no_scope()
 		return ast.ForClassicLoop{
 			init: init
@@ -84,13 +85,13 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 		}
 	} else {
 		cond := p.expr(0)
+		p.inside_for_cond = false
 		stmts := p.parse_block_no_scope()
 		return ast.ForLoop{
 			cond: cond
 			stmts: stmts
 		}
 	}
-	p.inside_for = false
 }
 
 fn (mut p Parser) fun_decl() ast.FunDecl {
@@ -166,6 +167,9 @@ fn (mut p Parser) package_decl() ast.PackageDecl {
 
 fn (mut p Parser) return_stmt() ast.Return {
 	p.check(.key_return)
+	if p.tok.kind == .rcur {
+		return ast.Return{}
+	}
 	expr := p.expr(0)
 	return ast.Return{
 		expr: expr
