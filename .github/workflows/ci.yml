@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    pull_request:
+    branches: [main]
+
+jobs:
+  code-style:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install V
+        uses: vlang/setup-v@v1
+        with:
+          check-latest: true
+      - uses: actions/checkout@v2
+      - name: Verify formatting
+        run: |
+          v fmt -diff .
+          v fmt -verify .
+
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install V
+        uses: vlang/setup-v@v1
+        with:
+          check-latest: true
+      - uses: actions/checkout@v2
+      - name: Build bait
+        run: v -o bait cmd/main.v
+      - name: Build examples
+        run: |
+          ./bait examples/hello_world.bait
