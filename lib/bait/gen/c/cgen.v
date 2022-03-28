@@ -2,6 +2,7 @@ module c
 
 import strings
 import lib.bait.ast
+import lib.bait.pref
 
 const c_reserved = ['calloc', 'main', 'malloc']
 
@@ -9,6 +10,7 @@ const builtin_struct_types = ['array', 'string']
 
 struct Gen {
 	table &ast.Table
+	pref  &pref.Preferences
 mut:
 	pkg_name                string
 	lang                    ast.Language = .bait
@@ -18,16 +20,19 @@ mut:
 	is_assign_left_side     bool
 	is_array_set            bool
 	cheaders                strings.Builder
+	global_inits            strings.Builder
 	type_defs               strings.Builder
 	type_impls              strings.Builder
 	fun_decls               strings.Builder
 	out                     strings.Builder
 }
 
-pub fn gen(files []&ast.File, table &ast.Table) string {
+pub fn gen(files []&ast.File, table &ast.Table, prefs &pref.Preferences) string {
 	mut g := Gen{
 		table: table
+		pref: prefs
 		cheaders: strings.new_builder(1000)
+		global_inits: strings.new_builder(100)
 		type_defs: strings.new_builder(1000)
 		type_impls: strings.new_builder(1000)
 		fun_decls: strings.new_builder(1000)
@@ -39,12 +44,17 @@ pub fn gen(files []&ast.File, table &ast.Table) string {
 		g.stmts(file.stmts)
 		g.indent++
 	}
-	g.c_main()
+	g.write_c_init()
+	if g.pref.is_test {
+		g.c_test_main()
+	} else {
+		g.c_main()
+	}
 	mut sb := strings.new_builder(100000)
 	sb.writeln(g.cheaders.str())
 	sb.writeln(g.type_defs.str())
-	sb.writeln(g.type_impls.str())
 	sb.writeln(g.fun_decls.str())
+	sb.writeln(g.type_impls.str())
 	sb.writeln(g.out.str())
 	return sb.str()
 }
@@ -58,18 +68,55 @@ fn (mut g Gen) init() {
 		builtin_struct_syms << g.table.type_symbols[g.table.type_idxs[bst]]
 	}
 	g.write_types(builtin_struct_syms)
-	g.write_other_types()
+	g.write_sorted_types()
 }
 
-fn (mut g Gen) write_other_types() {
+fn (mut g Gen) write_sorted_types() {
 	mut symbols := []ast.TypeSymbol{}
+	mut names := []string{}
 	for tsym in g.table.type_symbols {
 		if tsym.name in c.builtin_struct_types {
 			continue
 		}
 		symbols << tsym
+		names << tsym.name
 	}
-	g.write_types(symbols)
+	mut deps := map[string][]string{}
+	for tsym in symbols {
+		mut sym_deps := []string{}
+		match tsym.info {
+			ast.StructInfo {
+				for field in tsym.info.fields {
+					ftype_name := g.table.get_type_symbol(field.typ).name
+					if ftype_name !in names || ftype_name in sym_deps || field.typ.nr_amp() > 0 {
+						continue
+					}
+					sym_deps << ftype_name
+				}
+			}
+			else {}
+		}
+		deps[tsym.name] = sym_deps
+	}
+	mut sorted_names := []string{}
+	for {
+		for i := 0; i < names.len; i++ {
+			if names[i] in sorted_names {
+				continue
+			}
+			if deps[names[i]].len == 0 || deps[names[i]].filter(it !in sorted_names).len == 0 {
+				sorted_names << names[i]
+			}
+		}
+		if sorted_names.len == names.len {
+			break
+		}
+	}
+	mut sorted_symbols := []ast.TypeSymbol{}
+	for n in sorted_names {
+		sorted_symbols << g.table.type_symbols[g.table.type_idxs[n]]
+	}
+	g.write_types(sorted_symbols)
 }
 
 fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
@@ -94,8 +141,30 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 	}
 }
 
+fn (mut g Gen) write_c_init() {
+	g.writeln('void bait_init() {')
+	g.write(g.global_inits.str())
+	g.writeln('}\n')
+}
+
+fn (mut g Gen) c_test_main() {
+	g.writeln('int main(int argc, char* argv[]) {')
+	g.writeln('\tbait_init();')
+	for _, f in g.table.fns {
+		if f.is_test {
+			cfname := c_name(f.name)
+			pure_fname := f.name.all_after_last('.')
+			g.writeln('\tTestRunner_set_test_info(&test_runner, SLIT("$pure_fname"), SLIT("$g.pref.path"));')
+			g.writeln('\t${cfname}();')
+		}
+	}
+	g.writeln('\treturn TestRunner_exit_code(&test_runner);')
+	g.writeln('}')
+}
+
 fn (mut g Gen) c_main() {
 	g.writeln('int main(int argc, char* argv[]) {')
+	g.writeln('\tbait_init();')
 	g.writeln('\tmain__main();')
 	g.writeln('\treturn 0;')
 	g.writeln('}')
@@ -112,12 +181,14 @@ fn (mut g Gen) stmts(stmts []ast.Stmt) {
 fn (mut g Gen) stmt(node ast.Stmt) {
 	match node {
 		ast.EmptyStmt { panic('found empty stmt') }
+		ast.AssertStmt { g.assert_stmt(node) }
 		ast.AssignStmt { g.assign_stmt(node) }
 		ast.ConstDecl { g.const_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.ForLoop { g.for_loop(node) }
 		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
+		ast.GlobalDecl { g.global_decl(node) }
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // struct declarations are handled by write_types
@@ -152,6 +223,38 @@ fn (mut g Gen) expr_string(node ast.Expr) string {
 	g.expr(node)
 	expr_str := g.out.cut_to(pos)
 	return expr_str.trim_space()
+}
+
+fn (mut g Gen) assert_stmt(node ast.AssertStmt) {
+	g.write('if (')
+	g.expr(node.expr)
+	g.writeln(') {')
+	g.writeln('TestRunner_assert_pass(&test_runner);')
+	g.writeln('} else {')
+	if node.expr is ast.InfixExpr {
+		mut left_val := g.single_assert_expr_string(node.expr.left, node.expr.left_type)
+		mut right_val := g.single_assert_expr_string(node.expr.right, node.expr.right_type)
+		g.writeln('TestRunner_set_assert_info(&test_runner, $node.pos.line_nr, $left_val, $right_val);')
+	} else {
+		g.writeln('TestRunner_set_assert_info(&test_runner, $node.pos.line_nr, SLIT(""), SLIT(""));')
+	}
+	g.writeln('TestRunner_assert_fail(&test_runner);')
+	g.writeln('}')
+}
+
+fn (mut g Gen) single_assert_expr_string(expr ast.Expr, typ ast.Type) string {
+	if typ == ast.string_type {
+		return g.expr_string(expr)
+	} else if typ == ast.bool_type {
+		return '${g.expr_string(expr)} ? SLIT("true") : SLIT("false")'
+	} else {
+		sym := g.table.get_type_symbol(typ)
+		if sym.has_method('str') {
+			type_str := g.typ(typ)
+			return '${type_str}_str(${g.expr_string(expr)})'
+		}
+	}
+	return 'SLIT("*unknown value*")'
 }
 
 fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
@@ -240,6 +343,14 @@ fn (mut g Gen) fun_params(params []ast.Param) {
 	}
 }
 
+fn (mut g Gen) global_decl(node ast.GlobalDecl) {
+	typ := g.typ(node.typ)
+	name := c_name(node.name)
+	g.type_defs.writeln('$typ $name;')
+	expr := g.expr_string(node.expr)
+	g.global_inits.writeln('\t$name = $expr;')
+}
+
 fn (mut g Gen) package_decl(node ast.PackageDecl) {
 	g.pkg_name = node.name
 }
@@ -255,20 +366,32 @@ fn (mut g Gen) return_stmt(node ast.Return) {
 
 fn (mut g Gen) array_init(node ast.ArrayInit) {
 	elem_type := g.typ(node.elem_type)
-	g.write('new_array(')
-	if node.len_expr is ast.EmptyExpr {
-		g.write('0, ')
-	} else {
-		g.expr(node.len_expr)
+	if node.exprs.len == 0 {
+		g.write('new_array(')
+		if node.len_expr is ast.EmptyExpr {
+			g.write('0, ')
+		} else {
+			g.expr(node.len_expr)
+			g.write(', ')
+		}
+		if node.cap_expr is ast.EmptyExpr {
+			g.write('0, ')
+		} else {
+			g.expr(node.cap_expr)
+			g.write(', ')
+		}
+		g.write('sizeof($elem_type))')
+		return
+	}
+	len := node.exprs.len
+	g.writeln('new_array_from_c_array($len, $len, sizeof($elem_type), ($elem_type[$len]){')
+	g.indent++
+	for expr in node.exprs {
+		g.expr(expr)
 		g.write(', ')
 	}
-	if node.cap_expr is ast.EmptyExpr {
-		g.write('0, ')
-	} else {
-		g.expr(node.cap_expr)
-		g.write(', ')
-	}
-	g.write('sizeof($elem_type))')
+	g.indent--
+	g.write('})')
 }
 
 fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
@@ -399,8 +522,14 @@ fn (mut g Gen) infix_expr(node ast.InfixExpr) {
 			if node.op == .ne {
 				g.write('!')
 			}
-
 			g.write('string_eq(')
+			g.expr(node.left)
+			g.write(', ')
+			g.expr(node.right)
+			g.write(')')
+			return
+		} else if node.op == .plus {
+			g.write('string_add(')
 			g.expr(node.left)
 			g.write(', ')
 			g.expr(node.right)
@@ -443,11 +572,22 @@ fn (mut g Gen) string_literal(node ast.StringLiteral) {
 fn (mut g Gen) struct_init(node ast.StructInit) {
 	typ := g.typ(node.typ)
 	g.write('($typ){')
-	for i, field in node.fields {
+	mut inited_fields := []string{}
+	for field in node.fields {
+		inited_fields << field.name
+	}
+	info := g.table.get_type_symbol(node.typ).info as ast.StructInfo
+	for i, field in info.fields {
 		name := c_name(field.name)
 		g.write('.$name = ')
-		g.expr(field.expr)
-		if i < node.fields.len - 1 {
+		init_idx := inited_fields.index(field.name)
+		if init_idx == -1 {
+			g.write('0')
+		} else {
+			init_field := node.fields[init_idx]
+			g.expr(init_field.expr)
+		}
+		if i < info.fields.len - 1 {
 			g.write(', ')
 		}
 	}

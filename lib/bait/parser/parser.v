@@ -10,6 +10,7 @@ mut:
 	table           &ast.Table
 	scope           &ast.Scope
 	pkg_name        string
+	in_test_file    bool
 	inside_for_cond bool
 	inside_if_cond  bool
 	tidx            int
@@ -31,6 +32,7 @@ pub fn parse_tokens(tokens []token.Token, path string, table &ast.Table) &ast.Fi
 fn (mut p Parser) parse() &ast.File {
 	p.next()
 	p.next()
+	p.in_test_file = p.path.ends_with('_test.bait')
 	mut stmts := []ast.Stmt{}
 	pkg_decl := p.package_decl()
 	stmts << pkg_decl
@@ -42,6 +44,7 @@ fn (mut p Parser) parse() &ast.File {
 	}
 	return &ast.File{
 		path: p.path
+		is_test: p.in_test_file
 		pkg: pkg_decl
 		stmts: stmts
 	}

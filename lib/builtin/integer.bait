@@ -16,7 +16,7 @@ fun (n i32) str() string{
 
 fun (n i64) str() string{
 	max := 20
-	buf := []byte{len: max + 1}
+	buf := []byte{len: max}
 	i := max
 
 	is_neg := false
@@ -45,5 +45,5 @@ fun (n i64) str() string{
 		buf[i] = `-`
 	}
 
-	return buf.slice(i, buf.len).string()
+	return buf.slice(i, buf.len).str()
 }

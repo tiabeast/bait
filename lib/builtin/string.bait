@@ -23,7 +23,7 @@ fun (s string) to_lower()string{
 		}
 	}
 	buf[s.len] = 0
-	return buf.string()
+	return buf.str()
 }
 
 fun (s string) substr(start i32, end i32) string {
@@ -69,8 +69,52 @@ fun (s string) split(sep string) []string {
 	return res
 }
 
+fun(s string)contains(substr string)bool{
+	if substr.len == 0 {
+		return true
+	}
+	if s.index(substr) == -1 {
+		return false
+	}
+	return true
+}
+
+fun (s string) index(substr string) int {
+	if substr.len > s.len or substr.len == 0 {
+		return -1
+	}
+	i := 0
+	for i < s.len {
+		j := 0
+		for j < substr.len and s.str[i + j] == substr.str[j] {
+			j += 1
+		}
+		if j == substr.len {
+			return i
+		}
+		i += 1
+	}
+	return -1
+}
+
 fun (s string) at(i i32) byte {
 	return s.str[i]
+}
+
+fun string_add (a string, b string) string {
+	new_len := a.len + b.len
+	res := string{
+		str: calloc(new_len + 1)
+		len: new_len
+	}
+	for i:=0; i < a.len; i+=1 {
+		res.str[i] = a.str[i]
+	}
+	for i:=0; i < b.len; i+=1 {
+		res.str[a.len + i] = b.str[i]
+	}
+	res.str[new_len] = 0
+	return res
 }
 
 fun string_eq (a string, b string) bool {

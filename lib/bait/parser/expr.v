@@ -6,7 +6,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
 		.amp {
-			node = p.cast_expr(true)
+			node = p.prefix_or_cast_expr()
 		}
 		.char {
 			node = p.char_literal()
@@ -50,9 +50,9 @@ fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 			left = p.dot_expr(left)
 		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge,
 			.key_and, .key_or] {
-			return p.infix_expr(left)
+			left = p.infix_expr(left)
 		} else if p.tok.kind == .lbr {
-			return p.index_expr(left)
+			left = p.index_expr(left)
 		} else {
 			return left
 		}
@@ -139,11 +139,8 @@ fn (mut p Parser) call_args() []ast.CallArg {
 	return args
 }
 
-fn (mut p Parser) cast_expr(has_amp bool) ast.CastExpr {
-	mut target_type := p.parse_type()
-	if has_amp {
-		target_type.set_nr_amp(1)
-	}
+fn (mut p Parser) cast_expr() ast.CastExpr {
+	target_type := p.parse_type()
 	p.check(.lpar)
 	expr := p.expr(0)
 	p.check(.rpar)
@@ -267,7 +264,7 @@ fn (mut p Parser) name_expr() ast.Expr {
 	}
 	if p.peek_tok.kind == .lpar {
 		if p.tok.lit in p.table.type_idxs {
-			return p.cast_expr(false)
+			return p.cast_expr()
 		}
 		return p.call_expr(lang)
 	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
@@ -284,6 +281,17 @@ fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 		op: op
 		right: right
 	}
+}
+
+fn (mut p Parser) prefix_or_cast_expr() ast.Expr {
+	pexpr := p.prefix_expr()
+	if pexpr.right is ast.CastExpr {
+		return ast.CastExpr{
+			target_type: pexpr.right.target_type.set_nr_amp(1)
+			expr: pexpr.right.expr
+		}
+	}
+	return pexpr
 }
 
 fn (mut p Parser) string_literal() ast.StringLiteral {

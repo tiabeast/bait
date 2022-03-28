@@ -2,13 +2,15 @@ module ast
 
 import lib.bait.token
 
-pub type Stmt = AssignStmt
+pub type Stmt = AssertStmt
+	| AssignStmt
 	| ConstDecl
 	| EmptyStmt
 	| ExprStmt
 	| ForClassicLoop
 	| ForLoop
 	| FunDecl
+	| GlobalDecl
 	| PackageDecl
 	| Return
 	| StructDecl
@@ -34,6 +36,13 @@ pub struct EmptyExpr {}
 
 pub fn empty_expr() Expr {
 	return EmptyExpr{}
+}
+
+pub struct AssertStmt {
+pub:
+	pos token.Position
+pub mut:
+	expr Expr
 }
 
 pub struct AssignStmt {
@@ -79,6 +88,7 @@ pub:
 	params      []Param
 	return_type Type
 	is_method   bool
+	is_test     bool
 pub mut:
 	stmts []Stmt
 }
@@ -87,6 +97,14 @@ pub struct Param {
 pub:
 	name string
 	typ  Type
+}
+
+pub struct GlobalDecl {
+pub:
+	name string
+	typ  Type
+pub mut:
+	expr Expr
 }
 
 pub struct PackageDecl {
@@ -158,6 +176,7 @@ pub enum IdentKind {
 	unresolved
 	variable
 	constant
+	global
 }
 
 pub struct Ident {
@@ -236,16 +255,16 @@ pub mut:
 	expr Expr
 	typ  Type
 pub:
-	name string
-
+	name     string
 	exp_type Type
 }
 
 [heap]
 pub struct File {
 pub:
-	path string
-	pkg  PackageDecl
+	path    string
+	is_test bool
+	pkg     PackageDecl
 pub mut:
 	stmts []Stmt
 }

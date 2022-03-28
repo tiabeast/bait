@@ -4,12 +4,15 @@ pub type Type = int
 
 pub type TypeInfo = ArrayInfo | OtherInfo | StructInfo
 
+[heap]
 pub struct TypeSymbol {
 pub mut:
-	kind TypeKind
+	kind    TypeKind
+	methods []FunDecl
 pub:
-	name string
-	info TypeInfo
+	name       string
+	parent_idx int
+	info       TypeInfo
 }
 
 pub enum TypeKind {
@@ -40,6 +43,7 @@ const (
 	i64_type_idx    = 6
 	bool_type_idx   = 7
 	string_type_idx = 8
+	array_type_idx  = 9
 )
 
 pub const (
@@ -51,6 +55,7 @@ pub const (
 	i64_type    = new_type(i64_type_idx)
 	bool_type   = new_type(bool_type_idx)
 	string_type = new_type(string_type_idx)
+	array_type  = new_type(array_type_idx)
 )
 
 fn (mut t Table) register_builtin_type_symbols() {
@@ -63,6 +68,7 @@ fn (mut t Table) register_builtin_type_symbols() {
 	t.register_type_symbol(kind: .i64, name: 'i64')
 	t.register_type_symbol(kind: .bool, name: 'bool')
 	t.register_type_symbol(kind: .string, name: 'string')
+	t.register_type_symbol(kind: .array, name: 'array')
 }
 
 pub fn new_type(idx int) Type {
@@ -82,6 +88,20 @@ pub fn (t Type) set_nr_amp(nr int) Type {
 
 pub fn (t Type) nr_amp() int {
 	return (int(t) >> 16) & 0xf
+}
+
+pub fn (sym TypeSymbol) get_method(name string) ?FunDecl {
+	for m in sym.methods {
+		if m.name == name {
+			return m
+		}
+	}
+	return none
+}
+
+pub fn (sym TypeSymbol) has_method(name string) bool {
+	sym.get_method(name) or { return false }
+	return true
 }
 
 pub struct OtherInfo {}

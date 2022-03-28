@@ -30,12 +30,14 @@ fn (mut c Checker) stmts(mut stmts []ast.Stmt) {
 fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
 		ast.EmptyStmt { panic('found empty stmt') }
+		ast.AssertStmt { c.assert_stmt(mut node) }
 		ast.AssignStmt { c.assign_stmt(mut node) }
 		ast.ConstDecl { c.const_decl(mut node) }
 		ast.ExprStmt { c.expr(mut node.expr) }
 		ast.ForLoop { c.for_stmt(mut node) }
 		ast.ForClassicLoop { c.for_classic_stmt(mut node) }
 		ast.FunDecl { c.fun_decl(mut node) }
+		ast.GlobalDecl { c.global_decl(mut node) }
 		ast.PackageDecl { c.package_decl(node) }
 		ast.Return { c.return_stmt(mut node) }
 		ast.StructDecl { c.struct_decl(node) }
@@ -61,6 +63,10 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.StructInit { return c.struct_init(mut node) }
 	}
 	return ast.void_type
+}
+
+fn (mut c Checker) assert_stmt(mut node ast.AssertStmt) {
+	c.expr(mut node.expr)
 }
 
 fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
@@ -100,6 +106,10 @@ fn (mut c Checker) fun_decl(mut node ast.FunDecl) {
 	c.stmts(mut node.stmts)
 }
 
+fn (mut c Checker) global_decl(mut node ast.GlobalDecl) {
+	c.expr(mut node.expr)
+}
+
 fn (mut c Checker) package_decl(node ast.PackageDecl) {
 	c.pkg_name = node.name
 }
@@ -117,13 +127,30 @@ fn (mut c Checker) array_init(mut node ast.ArrayInit) ast.Type {
 	if node.len_expr !is ast.EmptyExpr {
 		c.expr(mut node.len_expr)
 	}
-	for mut e in node.exprs {
-		c.expr(mut e)
+	if node.exprs.len > 0 && node.elem_type == ast.void_type {
+		for i, mut e in node.exprs {
+			typ := c.expr(mut e)
+			if i == 0 {
+				node.elem_type = typ
+			}
+		}
+		idx := c.table.find_or_register_array(node.elem_type)
+		node.arr_type = ast.new_type(idx)
 	}
 	return node.arr_type
 }
 
 fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
+	if node.is_method {
+		c.method_call(mut node)
+	} else {
+		c.fun_call(mut node)
+	}
+	c.call_args(mut node.args)
+	return node.return_type
+}
+
+fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 	mut found := false
 	if !node.name.contains('.') && node.pkg != 'builtin' {
 		full_name := '${node.pkg}.$node.name'
@@ -139,16 +166,21 @@ fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 		c.error('unknown function: $node.name')
 	}
 	node.return_type = c.table.fns[node.name].return_type
-	if node.is_method {
-		node.receiver_type = c.expr(mut node.receiver)
-		rec_sym := c.table.get_type_symbol(node.receiver_type)
-		return_sym := c.table.get_type_symbol(node.return_type)
-		if rec_sym.kind == .array && return_sym.name == 'array' {
-			node.return_type = node.receiver_type
-		}
+}
+
+fn (mut c Checker) method_call(mut node ast.CallExpr) {
+	node.receiver_type = c.expr(mut node.receiver)
+	rec_sym := c.table.get_type_symbol(node.receiver_type)
+
+	if m := c.table.get_method(rec_sym, node.name) {
+		node.return_type = m.return_type
+	} else {
+		c.error('unknown method: ${rec_sym.name}.$node.name')
 	}
-	c.call_args(mut node.args)
-	return node.return_type
+	return_sym := c.table.get_type_symbol(node.return_type)
+	if rec_sym.kind == .array && return_sym.name == 'array' {
+		node.return_type = node.receiver_type
+	}
 }
 
 fn (mut c Checker) call_args(mut args []ast.CallArg) {
@@ -170,7 +202,12 @@ fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
 	}
 	gobj := c.table.global_scope.find(node.name)
 	if gobj.name.len > 0 {
-		node.kind = .constant
+		if gobj.is_global {
+			node.kind = .global
+		} else {
+			node.kind = .constant
+		}
+
 		return gobj.typ
 	}
 	return ast.void_type

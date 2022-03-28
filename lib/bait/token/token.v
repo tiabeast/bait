@@ -44,11 +44,13 @@ pub enum Kind {
 	le // <=
 	ge // >=
 	key_and
+	key_assert
 	key_const
 	key_else
 	key_false
 	key_for
 	key_fun
+	key_global
 	key_if
 	key_or
 	key_package
@@ -59,11 +61,13 @@ pub enum Kind {
 
 pub const keywords = {
 	'and':     Kind.key_and
+	'assert':  Kind.key_assert
 	'const':   Kind.key_const
 	'else':    Kind.key_else
 	'false':   Kind.key_false
 	'for':     Kind.key_for
 	'fun':     Kind.key_fun
+	'global':  Kind.key_global
 	'if':      Kind.key_if
 	'or':      Kind.key_or
 	'package': Kind.key_package
@@ -130,6 +134,7 @@ pub fn (k Kind) cstr() string {
 		.mul_assign { '*=' }
 		.div_assign { '/=' }
 		.mod_assign { '%=' }
+		.amp { '&' }
 		.eq { '==' }
 		.ne { '!=' }
 		.lt { '<' }

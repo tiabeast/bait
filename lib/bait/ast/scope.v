@@ -10,7 +10,8 @@ pub mut:
 
 pub struct ScopeObject {
 pub:
-	name string
+	name      string
+	is_global bool
 pub mut:
 	typ Type
 }

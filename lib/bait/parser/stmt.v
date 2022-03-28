@@ -5,6 +5,7 @@ import lib.bait.ast
 fn (mut p Parser) stmt() ast.Stmt {
 	match p.tok.kind {
 		.name { return p.assign_or_expr_stmt() }
+		.key_assert { return p.assert_stmt() }
 		.key_for { return p.for_stmt() }
 		.key_return { return p.return_stmt() }
 		else { return p.expr_stmt() }
@@ -15,10 +16,21 @@ fn (mut p Parser) top_level_stmt() ast.Stmt {
 	match p.tok.kind {
 		.key_const { return p.const_decl() }
 		.key_fun { return p.fun_decl() }
+		.key_global { return p.global_decl() }
 		.key_struct { return p.struct_decl() }
 		else { p.error('bad toplevel stmt: $p.tok') }
 	}
 	return ast.EmptyStmt{}
+}
+
+fn (mut p Parser) assert_stmt() ast.AssertStmt {
+	pos := p.tok.pos
+	p.check(.key_assert)
+	expr := p.expr(0)
+	return ast.AssertStmt{
+		pos: pos
+		expr: expr
+	}
 }
 
 fn (mut p Parser) assign_or_expr_stmt() ast.Stmt {
@@ -115,7 +127,9 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 		)
 		p.check(.rpar)
 	}
-	name := p.prepend_pkg(p.check_name())
+	mut name := p.check_name()
+	is_test := p.in_test_file && name.starts_with('test_')
+	name = p.prepend_pkg(name)
 	p.check(.lpar)
 	params << p.fun_params()
 	p.check(.rpar)
@@ -124,14 +138,20 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 		return_type = p.parse_type()
 	}
 	stmts := p.parse_block_no_scope()
-	node := ast.FunDecl{
+	mut node := ast.FunDecl{
 		name: name
 		params: params
 		return_type: return_type
-		stmts: stmts
 		is_method: is_method
+		is_test: is_test
 	}
-	p.table.fns[node.name] = node
+	if is_method {
+		mut rec_sym := p.table.get_type_symbol(params[0].typ)
+		rec_sym.methods << node
+	} else {
+		p.table.fns[node.name] = node
+	}
+	node.stmts = stmts
 	p.close_scope()
 	return node
 }
@@ -154,6 +174,20 @@ fn (mut p Parser) fun_params() []ast.Param {
 		}
 	}
 	return params
+}
+
+fn (mut p Parser) global_decl() ast.GlobalDecl {
+	p.check(.key_global)
+	name := p.check_name()
+	typ := p.parse_type()
+	p.check(.assign)
+	expr := p.expr(0)
+	p.scope.register(ast.ScopeObject{ name: name, typ: typ, is_global: true })
+	return ast.GlobalDecl{
+		name: name
+		typ: typ
+		expr: expr
+	}
 }
 
 fn (mut p Parser) package_decl() ast.PackageDecl {

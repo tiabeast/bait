@@ -2,6 +2,7 @@ module main
 
 import os
 import lib.bait.ast
+import lib.bait.pref
 import lib.bait.tokenizer
 import lib.bait.parser
 import lib.bait.checker
@@ -13,24 +14,50 @@ fn main() {
 		println('help coming soon')
 		exit(0)
 	}
-	if args[0].ends_with('.bait') || os.exists(args[0]) {
-		compile(args[0])
-		exit(0)
+	prefs, command := parse_args(args)
+	match command {
+		'test' {
+			run_tests(args[1..], prefs)
+			return
+		}
+		else {}
 	}
-	eprintln('Unknown command: `bait ${args[0]}`')
+	if command.ends_with('.bait') || os.exists(command) {
+		exit(compile(command, prefs))
+	}
+	eprintln('Unknown command: `bait $command`')
 	exit(1)
 }
 
-fn compile(path string) {
-	mut paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
-	if !os.is_dir(path) && os.exists(path) && path.ends_with('.bait') {
-		paths << path
-	} else if os.is_dir(path) {
-		paths << bait_files_from_dir(path)
-	} else {
-		eprintln('Unrecognized file or directory: "$path"')
-		exit(1)
+fn parse_args(args []string) (&pref.Preferences, string) {
+	mut p := &pref.Preferences{}
+	mut command := ''
+	for i := 0; i < args.len; i++ {
+		arg := args[i]
+		match arg {
+			'-o', '--output' {
+				p.out_name = args[i + 1]
+				i++
+			}
+			else {
+				if command.len == 0 {
+					command = arg
+				}
+			}
+		}
 	}
+	if p.out_name.len == 0 {
+		p.out_name = command.replace('.bait', '')
+	}
+	if command == 'test' {
+		p.is_test = true
+	}
+	return p, command
+}
+
+fn compile(path string, prefs &pref.Preferences) int {
+	mut paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
+	paths << get_user_files(path, prefs)
 	mut table := ast.new_table()
 	mut files := []&ast.File{}
 	for p in paths {
@@ -45,24 +72,123 @@ fn compile(path string) {
 		for err in checker.errors {
 			eprintln(err)
 		}
-		exit(1)
+		return 1
 	}
-	res := cgen.gen(files, table)
+	res := cgen.gen(files, table, prefs)
 	tmp_c_path := os.temp_dir() + '/a.tmp.c'
 	os.write_file(tmp_c_path, res) or { panic(err) }
-	out_file := os.getwd() + '/a.out'
+	mut out_file := prefs.out_name
+	if !out_file.starts_with('/') {
+		out_file = os.getwd() + '/' + out_file
+	}
 	cmd_res := os.execute('cc -o "$out_file" "$tmp_c_path"')
 	if cmd_res.output.len > 0 {
 		eprintln(cmd_res.output)
 	}
 	if cmd_res.exit_code != 0 {
+		return 1
+	}
+	return 0
+}
+
+fn run_tests(args []string, prefs &pref.Preferences) {
+	mut files_to_test := []string{}
+	for a in args {
+		if os.is_dir(a) {
+			files_to_test << test_files_from_dir_recursive(a)
+		} else if os.exists(a) {
+			if a.ends_with('_test.bait') {
+				files_to_test << a
+			}
+		} else {
+			eprintln('Unrecognized file or directory: "$a"')
+			exit(1)
+		}
+	}
+	files_to_test.sort()
+	mut has_fails := false
+	for i, file in files_to_test {
+		real_path := os.real_path(file)
+		mut test_prefs := prefs
+		test_prefs.path = file
+		test_prefs.out_name = os.temp_dir() + '/test_$i'
+		res := compile(real_path, test_prefs)
+		if res != 0 {
+			has_fails = true
+			println('FAIL $file')
+			continue
+		}
+		runres := os.execute(test_prefs.out_name)
+		if runres.exit_code == 0 {
+			println('OK $file')
+		} else {
+			has_fails = true
+			println('FAIL $file')
+			println(runres.output)
+		}
+	}
+	if has_fails {
 		exit(1)
 	}
+	exit(0)
+}
+
+fn test_files_from_dir_recursive(dir string) []string {
+	mut files := os.ls(dir) or { return []string{} }
+	mut res_files := []string{}
+	for file in files {
+		p := os.join_path(dir, file)
+		if os.is_dir(p) {
+			res_files << test_files_from_dir_recursive(p)
+		} else if os.exists(p) {
+			if p.ends_with('_test.bait') {
+				res_files << p
+			}
+		}
+	}
+	return res_files
+}
+
+fn get_user_files(_path string, prefs &pref.Preferences) []string {
+	mut path := _path
+	mut user_files := []string{}
+	mut is_internal_module_test := false
+	if prefs.is_test {
+		content := os.read_file(path) or { panic(err) }
+		lines := content.split_into_lines()
+		for line in lines {
+			if line.starts_with('package ') {
+				if line.starts_with('package main') {
+					break
+				}
+				is_internal_module_test = true
+				break
+			}
+		}
+	}
+	if is_internal_module_test {
+		user_files << path
+		path = os.dir(path)
+	}
+	if !os.is_dir(path) && os.exists(path) && path.ends_with('.bait') {
+		user_files << path
+	} else if os.is_dir(path) {
+		user_files << bait_files_from_dir(path)
+	}
+	return user_files
 }
 
 fn bait_files_from_dir(dir string) []string {
-	mut files := os.ls(dir) or { panic(err) }
-	files = files.filter(it.ends_with('.bait'))
+	mut all_files := os.ls(dir) or { panic(err) }
+	mut files := []string{}
+	for f in all_files {
+		if f.ends_with('_test.bait') {
+			continue
+		}
+		if f.ends_with('.bait') {
+			files << f
+		}
+	}
 	files = files.map(os.join_path(dir, it))
 	return files
 }
