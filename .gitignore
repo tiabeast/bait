@@ -1,5 +1,7 @@
-bait
+# ignore executable files
+*
 !*.*
 !*/
-*.out
+
+# other
 *.code-workspace

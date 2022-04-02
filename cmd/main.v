@@ -14,14 +14,12 @@ import lib.bait.gen.c as cgen
 fn main() {
 	args := os.args[1..]
 	if args.len == 0 {
-		println('help coming soon')
-		exit(0)
+		invoke_help_and_exit()
 	}
 	prefs, command := parse_args(args)
 	match command {
 		'help'{
-			println('help coming soon')
-			exit(0)
+			invoke_help_and_exit()
 		}
 		'test' {
 			run_tests(args[1..], prefs)
@@ -200,5 +198,31 @@ fn bait_files_from_dir(dir string) []string {
 	return files
 }
 
+fn should_recompile_tool(tool_exe string) bool {
+	if !os.exists(tool_exe) {
+		return true
+	}
+	return false
+}
+
+fn launch_bait_tool(name string){
+	exe := os.executable()
+	exe_root := os.dir(os.real_path(exe))
+	tool_path := os.join_path(exe_root, 'cmd', 'tools', name)
+	tool_source := tool_path + '.bait'
+	if should_recompile_tool(tool_path) {
+		cret := os.system('bait "$tool_source"')
+		if cret != 0 {
+			exit(cret)
+		}
+	}
+	ret := os.system(tool_path)
+	if ret != 0 {
+		exit(ret)
+	}
+}
+
 fn invoke_help_and_exit(){
+	launch_bait_tool('help')
+	exit(0)
 }
