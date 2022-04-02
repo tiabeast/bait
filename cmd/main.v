@@ -1,3 +1,6 @@
+// This file is part of: bait programming language
+// Copyright (c) 2022 Lukas Neubert
+// Use of this code is governed by an MIT License (see LICENSE.md).
 module main
 
 import os
@@ -10,12 +13,16 @@ import lib.bait.gen.c as cgen
 
 fn main() {
 	args := os.args[1..]
-	if args.len == 0 || args[0] == 'help' {
+	if args.len == 0 {
 		println('help coming soon')
 		exit(0)
 	}
 	prefs, command := parse_args(args)
 	match command {
+		'help'{
+			println('help coming soon')
+			exit(0)
+		}
 		'test' {
 			run_tests(args[1..], prefs)
 			return
@@ -191,4 +198,7 @@ fn bait_files_from_dir(dir string) []string {
 	}
 	files = files.map(os.join_path(dir, it))
 	return files
+}
+
+fn invoke_help_and_exit(){
 }
