@@ -112,7 +112,6 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 fn (mut p Parser) fun_decl() ast.FunDecl {
 	p.check(.key_fun)
 	p.open_scope()
-
 	mut is_method := false
 	mut params := []ast.Param{}
 	if p.tok.kind == .lpar {
@@ -191,6 +190,17 @@ fn (mut p Parser) global_decl() ast.GlobalDecl {
 		typ: typ
 		expr: expr
 	}
+}
+
+fn (mut p Parser) import_stmt() ast.Import {
+	p.check(.key_import)
+	name := p.check_name()
+	p.import_names << name
+	node := ast.Import{
+		name: name
+	}
+	p.imports << node
+	return node
 }
 
 fn (mut p Parser) package_decl() ast.PackageDecl {

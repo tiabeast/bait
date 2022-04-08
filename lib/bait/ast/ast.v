@@ -14,6 +14,7 @@ pub type Stmt = AssertStmt
 	| ForLoop
 	| FunDecl
 	| GlobalDecl
+	| Import
 	| PackageDecl
 	| Return
 	| StructDecl
@@ -108,6 +109,11 @@ pub:
 	typ  Type
 pub mut:
 	expr Expr
+}
+
+pub struct Import {
+pub:
+	name string
 }
 
 pub struct PackageDecl {
@@ -268,6 +274,7 @@ pub:
 	path    string
 	is_test bool
 	pkg     PackageDecl
+	imports []Import
 pub mut:
 	stmts []Stmt
 }

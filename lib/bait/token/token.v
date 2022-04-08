@@ -55,6 +55,7 @@ pub enum Kind {
 	key_fun
 	key_global
 	key_if
+	key_import
 	key_or
 	key_package
 	key_return
@@ -72,6 +73,7 @@ pub const keywords = {
 	'fun':     Kind.key_fun
 	'global':  Kind.key_global
 	'if':      Kind.key_if
+	'import':  Kind.key_import
 	'or':      Kind.key_or
 	'package': Kind.key_package
 	'return':  Kind.key_return

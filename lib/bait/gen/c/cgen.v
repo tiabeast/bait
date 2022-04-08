@@ -192,6 +192,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
 		ast.GlobalDecl { g.global_decl(node) }
+		ast.Import {}
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // struct declarations are handled by write_types

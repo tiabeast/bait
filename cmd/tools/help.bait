@@ -1,8 +1,20 @@
 // This file is part of: bait programming language
 // Copyright (c) 2022 Lukas Neubert
 // Use of this code is governed by an MIT License (see LICENSE.md).
+
 package main
 
+import os
+
 fun main() {
+	bexe := os.getenv('BAITEXE')
+	// TODO os.dir
+	broot := os.dir(exe_path)
 	// TODO
+	// println(get_topic_text('default'))
+}
+
+fun get_topic_text(topic string) string {
+	// TODO
+	return ''
 }

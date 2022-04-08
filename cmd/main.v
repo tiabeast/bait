@@ -14,12 +14,12 @@ import lib.bait.gen.c as cgen
 fn main() {
 	args := os.args[1..]
 	if args.len == 0 {
-		invoke_help_and_exit()
+		launch_bait_tool('help', args)
 	}
 	prefs, command := parse_args(args)
 	match command {
-		'help'{
-			invoke_help_and_exit()
+		'help' {
+			launch_bait_tool('help', args)
 		}
 		'test' {
 			run_tests(args[1..], prefs)
@@ -69,6 +69,19 @@ fn compile(path string, prefs &pref.Preferences) int {
 		tokens := tokenizer.tokenize_file(p)
 		files << parser.parse_tokens(tokens, p, table)
 	}
+	for i := 0; i < files.len; i++ {
+		f := files[i]
+		for imp in f.imports {
+			imp_path := imp.name.replace('.', '/')
+			imp_paths := bait_files_from_dir(os.resource_abs_path('lib/$imp_path'))
+			for p in imp_paths.filter(it !in paths) {
+				paths << p
+				tokens := tokenizer.tokenize_file(p)
+				files << parser.parse_tokens(tokens, p, table)
+			}
+		}
+	}
+	// TODO imports: sort
 	mut checker := checker.Checker{
 		table: table
 	}
@@ -198,31 +211,30 @@ fn bait_files_from_dir(dir string) []string {
 	return files
 }
 
-fn should_recompile_tool(tool_exe string) bool {
+fn should_recompile_tool(tool_exe string, tool_source string) bool {
 	if !os.exists(tool_exe) {
 		return true
 	}
-	return false
+	last_exe_mod := os.file_last_mod_unix(tool_exe)
+	last_source_mod := os.file_last_mod_unix(tool_source)
+	if last_exe_mod <= last_source_mod {
+		return true
+	}
+	// TODO check for modified imports, until then return always true
+	return true
 }
 
-fn launch_bait_tool(name string){
+fn launch_bait_tool(name string, args []string) {
 	exe := os.executable()
 	exe_root := os.dir(os.real_path(exe))
 	tool_path := os.join_path(exe_root, 'cmd', 'tools', name)
 	tool_source := tool_path + '.bait'
-	if should_recompile_tool(tool_path) {
+	if should_recompile_tool(tool_path, tool_source) {
 		cret := os.system('bait "$tool_source"')
 		if cret != 0 {
 			exit(cret)
 		}
 	}
-	ret := os.system(tool_path)
-	if ret != 0 {
-		exit(ret)
-	}
-}
-
-fn invoke_help_and_exit(){
-	launch_bait_tool('help')
-	exit(0)
+	tool_args := args.join(' ')
+	exit(os.system('$tool_path $tool_args'))
 }

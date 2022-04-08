@@ -1,0 +1,13 @@
+// This file is part of: bait programming language
+// Copyright (c) 2022 Lukas Neubert
+// Use of this code is governed by an MIT License (see LICENSE.md).
+
+package os
+
+fun getenv(key string) string {
+	s := &byte(C.getenv(key.str))
+	if s == &void(0) {
+		return ''
+	}
+	return s.cstring_to_string()
+}

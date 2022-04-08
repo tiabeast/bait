@@ -41,6 +41,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.ForClassicLoop { c.for_classic_stmt(mut node) }
 		ast.FunDecl { c.fun_decl(mut node) }
 		ast.GlobalDecl { c.global_decl(mut node) }
+		ast.Import { c.import_stmt(node) }
 		ast.PackageDecl { c.package_decl(node) }
 		ast.Return { c.return_stmt(mut node) }
 		ast.StructDecl { c.struct_decl(node) }
@@ -113,6 +114,9 @@ fn (mut c Checker) global_decl(mut node ast.GlobalDecl) {
 	c.expr(mut node.expr)
 }
 
+fn (mut c Checker) import_stmt(node ast.Import) {
+}
+
 fn (mut c Checker) package_decl(node ast.PackageDecl) {
 	c.pkg_name = node.name
 }
@@ -155,15 +159,15 @@ fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 
 fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 	mut found := false
-	if !node.name.contains('.') && node.pkg != 'builtin' {
+	if node.name in c.table.fns || node.lang == .c {
+		found = true
+	}
+	if !found && !node.name.contains('.') && node.pkg != 'builtin' {
 		full_name := '${node.pkg}.$node.name'
 		if full_name in c.table.fns {
 			found = true
 			node.name = full_name
 		}
-	}
-	if !found && (node.name in c.table.fns || node.lang == .c) {
-		found = true
 	}
 	if !found {
 		c.error('unknown function: $node.name')

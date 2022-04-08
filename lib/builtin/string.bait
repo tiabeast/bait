@@ -1,6 +1,7 @@
 // This file is part of: bait programming language
 // Copyright (c) 2022 Lukas Neubert
 // Use of this code is governed by an MIT License (see LICENSE.md).
+
 package builtin
 
 struct string{
@@ -12,6 +13,13 @@ fun (bp &byte) string_with_len(len int) string {
 	return string{
 		str: bp
 		len: len
+	}
+}
+
+fun (bp &byte) cstring_to_string() string {
+	return string{
+		str: bp
+		len: C.strlen(bp)
 	}
 }
 

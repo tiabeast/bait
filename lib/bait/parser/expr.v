@@ -116,7 +116,11 @@ fn (mut p Parser) bool_literal() ast.BoolLiteral {
 }
 
 fn (mut p Parser) call_expr(lang ast.Language) ast.CallExpr {
-	name := p.check_name()
+	mut name := p.check_name()
+	if p.expr_pkg.len > 0 {
+		name = '${p.expr_pkg}.$name'
+		p.expr_pkg = ''
+	}
 	p.check(.lpar)
 	args := p.call_args()
 	p.check(.rpar)
@@ -262,6 +266,11 @@ fn (mut p Parser) name_expr() ast.Expr {
 	mut lang := ast.Language.bait
 	if p.tok.lit == 'C' {
 		lang = .c
+		p.next()
+		p.check(.dot)
+	}
+	if p.peek_tok.kind == .dot && p.tok.lit in p.import_names {
+		p.expr_pkg = p.tok.lit
 		p.next()
 		p.check(.dot)
 	}

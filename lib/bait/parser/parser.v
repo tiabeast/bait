@@ -1,6 +1,7 @@
 // This file is part of: bait programming language
 // Copyright (c) 2022 Lukas Neubert
 // Use of this code is governed by an MIT License (see LICENSE.md).
+
 module parser
 
 import lib.bait.token
@@ -13,6 +14,9 @@ mut:
 	table           &ast.Table
 	scope           &ast.Scope
 	pkg_name        string
+	import_names    []string
+	imports         []ast.Import
+	expr_pkg        string
 	in_test_file    bool
 	inside_for_cond bool
 	inside_if_cond  bool
@@ -38,6 +42,9 @@ fn (mut p Parser) parse() &ast.File {
 	p.in_test_file = p.path.ends_with('_test.bait')
 	mut stmts := []ast.Stmt{}
 	pkg_decl := p.package_decl()
+	for p.tok.kind == .key_import {
+		stmts << p.import_stmt()
+	}
 	stmts << pkg_decl
 	for {
 		if p.tok.kind == .eof {
@@ -50,6 +57,7 @@ fn (mut p Parser) parse() &ast.File {
 		is_test: p.in_test_file
 		pkg: pkg_decl
 		stmts: stmts
+		imports: p.imports
 	}
 }
 
