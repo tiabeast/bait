@@ -108,6 +108,24 @@ fun (s string) index(substr string) int {
 	return -1
 }
 
+fun (s string) last_index(substr string) int {
+	if substr.len > s.len or substr.len == 0 {
+		return -1
+	}
+	i := s.len - substr.len
+	for i >= 0 {
+		j := 0
+		for j < substr.len and s.str[i + j] == substr.str[j] {
+			j += 1
+		}
+		if j == substr.len {
+			return i
+		}
+		i -= 1
+	}
+	return -1
+}
+
 fun (s string) at(i i32) byte {
 	return s.str[i]
 }

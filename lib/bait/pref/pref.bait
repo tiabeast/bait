@@ -1,0 +1,17 @@
+// This file is part of: bait programming language
+// Copyright (c) 2022 Lukas Neubert
+// Use of this code is governed by an MIT License (see LICENSE.md).
+
+package pref
+
+import os
+
+fun bait_exe_path() string {
+	bexe := os.getenv('BAITEXE')
+	if bexe.len > 0 {
+		return bexe
+	}
+	exe_path := os.real_path(os.executable())
+	os.setenv('BAITEXE', exe_path, true)
+	return exe_path
+}

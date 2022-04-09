@@ -4,10 +4,52 @@
 
 package os
 
+fun setenv(name string, value string, overwrite bool){
+	C.setenv(name.str, value.str, overwrite)
+}
+
 fun getenv(key string) string {
 	s := &byte(C.getenv(key.str))
 	if s == &void(0) {
 		return ''
 	}
 	return s.cstring_to_string()
+}
+
+fun dir(path string) string{
+	if path.len == 0{
+		return '.'
+	}
+	pos := path.last_index('/')
+	if pos == -1 {
+		return '.'
+	}
+	if pos == 0 {
+		return '/'
+	}
+	return path.substr(0, pos)
+}
+
+fun join_path(base string, dirs []string) string {
+	path := base
+	for i:=0;i<dirs.len;i+=1{
+		d:=dirs[i]
+		path = path + '/' + d
+	}
+	return path
+}
+
+fun real_path(path string) string {
+	res := &byte(C.realpath(path.str, &void(0)))
+	return res.cstring_to_string()
+}
+
+fun executable()string{
+	result := &byte(calloc(4096))
+	count := i32(C.readlink('/proc/self/exe', result, 4096))
+	if count < 0 {
+		eprintln('os.executable() failed at reading /proc/self/exe to get exe path')
+		return ''
+	}
+	return result.cstring_to_string()
 }

@@ -113,7 +113,8 @@ pub mut:
 
 pub struct Import {
 pub:
-	name string
+	name  string
+	alias string
 }
 
 pub struct PackageDecl {

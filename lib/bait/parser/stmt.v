@@ -194,10 +194,17 @@ fn (mut p Parser) global_decl() ast.GlobalDecl {
 
 fn (mut p Parser) import_stmt() ast.Import {
 	p.check(.key_import)
-	name := p.check_name()
-	p.import_names << name
+	mut name_parts := []string{}
+	name_parts << p.check_name()
+	for p.tok.kind == .dot {
+		p.next()
+		name_parts << p.check_name()
+	}
+	alias := name_parts.last()
+	p.import_aliases << alias
 	node := ast.Import{
-		name: name
+		name: name_parts.join('.')
+		alias: alias
 	}
 	p.imports << node
 	return node

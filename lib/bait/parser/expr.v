@@ -269,7 +269,7 @@ fn (mut p Parser) name_expr() ast.Expr {
 		p.next()
 		p.check(.dot)
 	}
-	if p.peek_tok.kind == .dot && p.tok.lit in p.import_names {
+	if p.peek_tok.kind == .dot && p.tok.lit in p.import_aliases {
 		p.expr_pkg = p.tok.lit
 		p.next()
 		p.check(.dot)

@@ -7,14 +7,18 @@ package main
 import os
 
 fun main() {
-	bexe := os.getenv('BAITEXE')
-	// TODO os.dir
-	broot := os.dir(exe_path)
-	// TODO
-	// println(get_topic_text('default'))
+	// TODO get topic from cmd args or default
+	res := get_topic_text('default')
+	if res.len == 0 {
+		eprintln('Unknown topic: default')
+		exit(1)
+	}
+	println(res)
 }
 
 fun get_topic_text(topic string) string {
-	// TODO
-	return ''
+	cmd_root := os.dir(os.dir(os.executable()))
+	topic_path := os.join_path(cmd_root, ['help', topic + '.txt'])
+	// TODO os.read_file
+	return os.read_file(topic_path)
 }

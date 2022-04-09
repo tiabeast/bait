@@ -14,7 +14,7 @@ mut:
 	table           &ast.Table
 	scope           &ast.Scope
 	pkg_name        string
-	import_names    []string
+	import_aliases  []string
 	imports         []ast.Import
 	expr_pkg        string
 	in_test_file    bool
