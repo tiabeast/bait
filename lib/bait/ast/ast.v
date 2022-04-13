@@ -63,6 +63,7 @@ pub struct ConstDecl {
 pub mut:
 	name string
 	expr Expr
+	typ  Type
 }
 
 pub struct ExprStmt {

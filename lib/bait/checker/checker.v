@@ -92,6 +92,7 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 	typ := c.expr(mut node.expr)
 	c.table.global_scope.update_type(node.name, typ)
+	node.typ = typ
 }
 
 fn (mut c Checker) for_stmt(mut node ast.ForLoop) {
@@ -178,7 +179,6 @@ fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 fn (mut c Checker) method_call(mut node ast.CallExpr) {
 	node.receiver_type = c.expr(mut node.receiver)
 	rec_sym := c.table.get_type_symbol(node.receiver_type)
-
 	if m := c.table.get_method(rec_sym, node.name) {
 		node.return_type = m.return_type
 	} else {

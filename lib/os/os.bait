@@ -1,8 +1,18 @@
-// This file is part of: bait programming language
+// This file is part of: bait.
 // Copyright (c) 2022 Lukas Neubert
 // Use of this code is governed by an MIT License (see LICENSE.md).
 
 package os
+
+const ARGS = init_os_args(C.argc, &&byte(C.argv))
+
+fun init_os_args(argc i32, argv &&byte) []string {
+	a := []string{len: argc}
+	for i:=0; i < argc; i += 1 {
+		a[i] = argv[i].cstring_to_string()
+	}
+	return a
+}
 
 fun setenv(name string, value string, overwrite bool){
 	C.setenv(name.str, value.str, overwrite)
@@ -52,4 +62,17 @@ fun executable()string{
 		return ''
 	}
 	return result.cstring_to_string()
+}
+
+fun read_file(path string) string {
+	fp := &void(0)
+	fp = C.fopen(path.str, 'rb')
+	C.fseek(fp, 0, C.SEEK_END)
+	fsize := int(C.ftell(fp))
+	C.rewind(fp)
+	str := malloc(fsize + 1)
+	nelements := int(C.fread(str, 1, fsize, fp))
+	str[nelements] = 0
+	C.fclose(fp)
+	return str.string_with_len(nelements)
 }

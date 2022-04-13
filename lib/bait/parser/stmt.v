@@ -64,7 +64,8 @@ fn (mut p Parser) partial_assign_stmt(left ast.Expr) ast.AssignStmt {
 
 fn (mut p Parser) const_decl() ast.ConstDecl {
 	p.check(.key_const)
-	name := p.check_name()
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
 	p.check(.assign)
 	expr := p.expr(0)
 	p.table.global_scope.register(ast.ScopeObject{ name: name })

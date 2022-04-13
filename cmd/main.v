@@ -81,18 +81,36 @@ fn compile(path string, prefs &pref.Preferences) int {
 			}
 		}
 	}
-	// TODO imports: sort
+	mut deps := map[string][]string{}
+	for f in files {
+		if f.pkg.name != 'builtin' {
+			deps[f.pkg.name] << 'builtin'
+		}
+		for imp in f.imports {
+			deps[f.pkg.name] << imp.name
+		}
+	}
+	mut ordered := []string{}
+	order_deps(mut ordered, 'main', deps)
+	mut reordered_files := []&ast.File{}
+	for pkg in ordered {
+		for f in files {
+			if pkg == f.pkg.name {
+				reordered_files << f
+			}
+		}
+	}
 	mut checker := checker.Checker{
 		table: table
 	}
-	checker.check_files(files)
+	checker.check_files(reordered_files)
 	if checker.errors.len > 0 {
 		for err in checker.errors {
 			eprintln(err)
 		}
 		return 1
 	}
-	res := cgen.gen(files, table, prefs)
+	res := cgen.gen(reordered_files, table, prefs)
 	tmp_c_path := os.temp_dir() + '/a.tmp.c'
 	os.write_file(tmp_c_path, res) or { panic(err) }
 	mut out_file := prefs.out_name
@@ -237,4 +255,14 @@ fn launch_bait_tool(name string, args []string) {
 	}
 	tool_args := args.join(' ')
 	exit(os.system('$tool_path $tool_args'))
+}
+
+fn order_deps(mut ordered []string, mod string, deps map[string][]string) []string {
+	for d in deps[mod] {
+		order_deps(mut ordered, d, deps)
+	}
+	if mod !in ordered {
+		ordered << mod
+	}
+	return ordered
 }

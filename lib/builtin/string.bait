@@ -1,4 +1,4 @@
-// This file is part of: bait programming language
+// This file is part of: bait.
 // Copyright (c) 2022 Lukas Neubert
 // Use of this code is governed by an MIT License (see LICENSE.md).
 
@@ -9,7 +9,7 @@ struct string{
 	len i32
 }
 
-fun (bp &byte) string_with_len(len int) string {
+fun (bp &byte) string_with_len(len i32) string {
 	return string{
 		str: bp
 		len: len

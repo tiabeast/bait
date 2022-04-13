@@ -1,4 +1,4 @@
-// This file is part of: bait programming language
+// This file is part of: bait.
 // Copyright (c) 2022 Lukas Neubert
 // Use of this code is governed by an MIT License (see LICENSE.md).
 
@@ -7,8 +7,12 @@ package main
 import os
 
 fun main() {
-	// TODO get topic from cmd args or default
-	res := get_topic_text('default')
+	args := os.ARGS.slice(1, os.ARGS.len)
+	topic := 'default'
+	if args.len > 1 {
+		topic = args[1]
+	}
+	res := get_topic_text(topic)
 	if res.len == 0 {
 		eprintln('Unknown topic: default')
 		exit(1)
@@ -19,6 +23,10 @@ fun main() {
 fun get_topic_text(topic string) string {
 	cmd_root := os.dir(os.dir(os.executable()))
 	topic_path := os.join_path(cmd_root, ['help', topic + '.txt'])
-	// TODO os.read_file
+	// TODO os.exists()
+	// TODO not keyword
+	if not os.exists(topic_path) {
+		return ''
+	}
 	return os.read_file(topic_path)
 }

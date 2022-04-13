@@ -185,7 +185,11 @@ fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 }
 
 fn (mut p Parser) ident() ast.Ident {
-	name := p.check_name()
+	mut name := p.check_name()
+	if p.expr_pkg.len > 0 {
+		name = '${p.expr_pkg}.$name'
+		p.expr_pkg = ''
+	}
 	return ast.Ident{
 		name: name
 		scope: p.scope
@@ -296,6 +300,9 @@ fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 }
 
 fn (mut p Parser) prefix_or_cast_expr() ast.Expr {
+	if p.peek_tok.kind == .amp {
+		return p.cast_expr()
+	}
 	pexpr := p.prefix_expr()
 	if pexpr.right is ast.CastExpr {
 		return ast.CastExpr{
