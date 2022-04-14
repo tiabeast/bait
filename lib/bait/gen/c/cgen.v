@@ -7,7 +7,7 @@ import strings
 import lib.bait.ast
 import lib.bait.pref
 
-const c_reserved = ['calloc', 'main', 'malloc']
+const c_reserved = ['calloc', 'exit', 'main', 'malloc']
 
 const builtin_struct_types = ['array', 'string']
 

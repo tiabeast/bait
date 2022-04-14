@@ -14,7 +14,7 @@ fun main() {
 	}
 	res := get_topic_text(topic)
 	if res.len == 0 {
-		eprintln('Unknown topic: default')
+		eprintln('Unknown topic: ' + topic)
 		exit(1)
 	}
 	println(res)
@@ -23,8 +23,6 @@ fun main() {
 fun get_topic_text(topic string) string {
 	cmd_root := os.dir(os.dir(os.executable()))
 	topic_path := os.join_path(cmd_root, ['help', topic + '.txt'])
-	// TODO os.exists()
-	// TODO not keyword
 	if not os.exists(topic_path) {
 		return ''
 	}

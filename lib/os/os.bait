@@ -57,11 +57,11 @@ fun real_path(path string) string {
 fun executable()string{
 	result := &byte(calloc(4096))
 	count := i32(C.readlink('/proc/self/exe', result, 4096))
-	if count < 0 {
-		eprintln('os.executable() failed at reading /proc/self/exe to get exe path')
-		return ''
-	}
 	return result.cstring_to_string()
+}
+
+fun exists(path string) bool {
+	return C.access(path.str, 0) != -1
 }
 
 fun read_file(path string) string {

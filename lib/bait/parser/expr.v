@@ -36,6 +36,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.key_if {
 			node = p.if_expr()
 		}
+		.key_not{
+			node = p.prefix_expr()
+		}
 		.key_true, .key_false {
 			node = p.bool_literal()
 		}
@@ -52,7 +55,7 @@ fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 		if p.tok.kind == .dot {
 			left = p.dot_expr(left)
 		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge,
-			.key_and, .key_or] {
+			.key_and, .key_not, .key_or] {
 			left = p.infix_expr(left)
 		} else if p.tok.kind == .lbr {
 			left = p.index_expr(left)
