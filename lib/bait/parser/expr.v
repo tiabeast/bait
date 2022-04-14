@@ -36,7 +36,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.key_if {
 			node = p.if_expr()
 		}
-		.key_not{
+		.key_not {
 			node = p.prefix_expr()
 		}
 		.key_true, .key_false {

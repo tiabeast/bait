@@ -75,7 +75,7 @@ pub const keywords = {
 	'global':  Kind.key_global
 	'if':      Kind.key_if
 	'import':  Kind.key_import
-	'not':Kind.key_not
+	'not':     Kind.key_not
 	'or':      Kind.key_or
 	'package': Kind.key_package
 	'return':  Kind.key_return
@@ -152,7 +152,7 @@ pub fn (k Kind) cstr() string {
 		.le { '<=' }
 		.ge { '>=' }
 		.key_and { '&&' }
-		.key_not{'!'}
+		.key_not { '!' }
 		.key_or { '||' }
 		else { k.str() }
 	}
