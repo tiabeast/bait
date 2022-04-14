@@ -1,5 +1,5 @@
-// This file is part of: bait programming language
-// Copyright (c) 2022 Lukas Neubert
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
 module parser
 
@@ -187,7 +187,7 @@ fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	}
 }
 
-fn (mut p Parser) ident() ast.Ident {
+fn (mut p Parser) ident(lang ast.Language) ast.Ident {
 	mut name := p.check_name()
 	if p.expr_pkg.len > 0 {
 		name = '${p.expr_pkg}.$name'
@@ -195,7 +195,9 @@ fn (mut p Parser) ident() ast.Ident {
 	}
 	return ast.Ident{
 		name: name
+		pkg: p.pkg_name
 		scope: p.scope
+		lang: lang
 	}
 }
 
@@ -289,7 +291,7 @@ fn (mut p Parser) name_expr() ast.Expr {
 	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
 		return p.struct_init()
 	}
-	return p.ident()
+	return p.ident(lang)
 }
 
 fn (mut p Parser) prefix_expr() ast.PrefixExpr {

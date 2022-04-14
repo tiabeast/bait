@@ -1,5 +1,5 @@
-// This file is part of: bait programming language
-// Copyright (c) 2022 Lukas Neubert
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
 module main
 
@@ -69,6 +69,7 @@ fn compile(path string, prefs &pref.Preferences) int {
 		tokens := tokenizer.tokenize_file(p)
 		files << parser.parse_tokens(tokens, p, table)
 	}
+	pkg_name := files.last().pkg.name
 	for i := 0; i < files.len; i++ {
 		f := files[i]
 		for imp in f.imports {
@@ -91,7 +92,7 @@ fn compile(path string, prefs &pref.Preferences) int {
 		}
 	}
 	mut ordered := []string{}
-	order_deps(mut ordered, 'main', deps)
+	order_deps(mut ordered, pkg_name, deps)
 	mut reordered_files := []&ast.File{}
 	for pkg in ordered {
 		for f in files {

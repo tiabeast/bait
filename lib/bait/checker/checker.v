@@ -1,5 +1,5 @@
-// This file is part of: bait programming language
-// Copyright (c) 2022 Lukas Neubert
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
 module checker
 
@@ -202,10 +202,16 @@ fn (mut c Checker) cast_expr(mut node ast.CastExpr) ast.Type {
 }
 
 fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
+	if node.lang != .bait {
+		return ast.void_type
+	}
 	obj := node.scope.find(node.name)
 	if obj.name.len > 0 {
 		node.kind = .variable
 		return obj.typ
+	}
+	if !node.name.contains('.') && node.pkg != 'builtin' {
+		node.name = '${node.pkg}.$node.name'
 	}
 	gobj := c.table.global_scope.find(node.name)
 	if gobj.name.len > 0 {

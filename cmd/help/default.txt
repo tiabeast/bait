@@ -1,1 +1,12 @@
-help coming soon
+Usage:
+   bait [options] <command> [arguments]
+
+Examples:
+   bait hello.bait   Compiles the file `hello.bait` into a binary called `hello`.
+   bait my_folder    Compiles all files from `my_folder` into a single binary.
+
+Commands:
+   test    Run the provided test or all tests in the given directory.
+
+Run `bait help build` for more information on build flags and compilation behaviour.
+Use `bait help <command>` to get detailed information about a command.
