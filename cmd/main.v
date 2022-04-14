@@ -14,14 +14,12 @@ import lib.bait.gen.c as cgen
 fn main() {
 	args := os.args[1..]
 	if args.len == 0 {
-		println('help coming soon')
-		exit(0)
+		launch_bait_tool('help', args)
 	}
 	prefs, command := parse_args(args)
 	match command {
-		'help'{
-			println('help coming soon')
-			exit(0)
+		'help' {
+			launch_bait_tool('help', args)
 		}
 		'test' {
 			run_tests(args[1..], prefs)
@@ -71,17 +69,48 @@ fn compile(path string, prefs &pref.Preferences) int {
 		tokens := tokenizer.tokenize_file(p)
 		files << parser.parse_tokens(tokens, p, table)
 	}
+	for i := 0; i < files.len; i++ {
+		f := files[i]
+		for imp in f.imports {
+			imp_path := imp.name.replace('.', '/')
+			imp_paths := bait_files_from_dir(os.resource_abs_path('lib/$imp_path'))
+			for p in imp_paths.filter(it !in paths) {
+				paths << p
+				tokens := tokenizer.tokenize_file(p)
+				files << parser.parse_tokens(tokens, p, table)
+			}
+		}
+	}
+	mut deps := map[string][]string{}
+	for f in files {
+		if f.pkg.name != 'builtin' {
+			deps[f.pkg.name] << 'builtin'
+		}
+		for imp in f.imports {
+			deps[f.pkg.name] << imp.name
+		}
+	}
+	mut ordered := []string{}
+	order_deps(mut ordered, 'main', deps)
+	mut reordered_files := []&ast.File{}
+	for pkg in ordered {
+		for f in files {
+			if pkg == f.pkg.name {
+				reordered_files << f
+			}
+		}
+	}
 	mut checker := checker.Checker{
 		table: table
 	}
-	checker.check_files(files)
+	checker.check_files(reordered_files)
 	if checker.errors.len > 0 {
 		for err in checker.errors {
 			eprintln(err)
 		}
 		return 1
 	}
-	res := cgen.gen(files, table, prefs)
+	res := cgen.gen(reordered_files, table, prefs)
 	tmp_c_path := os.temp_dir() + '/a.tmp.c'
 	os.write_file(tmp_c_path, res) or { panic(err) }
 	mut out_file := prefs.out_name
@@ -200,5 +229,40 @@ fn bait_files_from_dir(dir string) []string {
 	return files
 }
 
-fn invoke_help_and_exit(){
+fn should_recompile_tool(tool_exe string, tool_source string) bool {
+	if !os.exists(tool_exe) {
+		return true
+	}
+	last_exe_mod := os.file_last_mod_unix(tool_exe)
+	last_source_mod := os.file_last_mod_unix(tool_source)
+	if last_exe_mod <= last_source_mod {
+		return true
+	}
+	// TODO check for modified imports, until then return always true
+	return true
+}
+
+fn launch_bait_tool(name string, args []string) {
+	exe := os.executable()
+	exe_root := os.dir(os.real_path(exe))
+	tool_path := os.join_path(exe_root, 'cmd', 'tools', name)
+	tool_source := tool_path + '.bait'
+	if should_recompile_tool(tool_path, tool_source) {
+		cret := os.system('bait "$tool_source"')
+		if cret != 0 {
+			exit(cret)
+		}
+	}
+	tool_args := args.join(' ')
+	exit(os.system('$tool_path $tool_args'))
+}
+
+fn order_deps(mut ordered []string, mod string, deps map[string][]string) []string {
+	for d in deps[mod] {
+		order_deps(mut ordered, d, deps)
+	}
+	if mod !in ordered {
+		ordered << mod
+	}
+	return ordered
 }

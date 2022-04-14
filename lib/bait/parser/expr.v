@@ -36,6 +36,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.key_if {
 			node = p.if_expr()
 		}
+		.key_not {
+			node = p.prefix_expr()
+		}
 		.key_true, .key_false {
 			node = p.bool_literal()
 		}
@@ -52,7 +55,7 @@ fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 		if p.tok.kind == .dot {
 			left = p.dot_expr(left)
 		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge,
-			.key_and, .key_or] {
+			.key_and, .key_not, .key_or] {
 			left = p.infix_expr(left)
 		} else if p.tok.kind == .lbr {
 			left = p.index_expr(left)
@@ -116,7 +119,11 @@ fn (mut p Parser) bool_literal() ast.BoolLiteral {
 }
 
 fn (mut p Parser) call_expr(lang ast.Language) ast.CallExpr {
-	name := p.check_name()
+	mut name := p.check_name()
+	if p.expr_pkg.len > 0 {
+		name = '${p.expr_pkg}.$name'
+		p.expr_pkg = ''
+	}
 	p.check(.lpar)
 	args := p.call_args()
 	p.check(.rpar)
@@ -181,7 +188,11 @@ fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 }
 
 fn (mut p Parser) ident() ast.Ident {
-	name := p.check_name()
+	mut name := p.check_name()
+	if p.expr_pkg.len > 0 {
+		name = '${p.expr_pkg}.$name'
+		p.expr_pkg = ''
+	}
 	return ast.Ident{
 		name: name
 		scope: p.scope
@@ -265,6 +276,11 @@ fn (mut p Parser) name_expr() ast.Expr {
 		p.next()
 		p.check(.dot)
 	}
+	if p.peek_tok.kind == .dot && p.tok.lit in p.import_aliases {
+		p.expr_pkg = p.tok.lit
+		p.next()
+		p.check(.dot)
+	}
 	if p.peek_tok.kind == .lpar {
 		if p.tok.lit in p.table.type_idxs {
 			return p.cast_expr()
@@ -287,6 +303,9 @@ fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 }
 
 fn (mut p Parser) prefix_or_cast_expr() ast.Expr {
+	if p.peek_tok.kind == .amp {
+		return p.cast_expr()
+	}
 	pexpr := p.prefix_expr()
 	if pexpr.right is ast.CastExpr {
 		return ast.CastExpr{

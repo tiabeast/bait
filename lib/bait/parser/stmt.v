@@ -64,7 +64,8 @@ fn (mut p Parser) partial_assign_stmt(left ast.Expr) ast.AssignStmt {
 
 fn (mut p Parser) const_decl() ast.ConstDecl {
 	p.check(.key_const)
-	name := p.check_name()
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
 	p.check(.assign)
 	expr := p.expr(0)
 	p.table.global_scope.register(ast.ScopeObject{ name: name })
@@ -112,7 +113,6 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 fn (mut p Parser) fun_decl() ast.FunDecl {
 	p.check(.key_fun)
 	p.open_scope()
-
 	mut is_method := false
 	mut params := []ast.Param{}
 	if p.tok.kind == .lpar {
@@ -191,6 +191,24 @@ fn (mut p Parser) global_decl() ast.GlobalDecl {
 		typ: typ
 		expr: expr
 	}
+}
+
+fn (mut p Parser) import_stmt() ast.Import {
+	p.check(.key_import)
+	mut name_parts := []string{}
+	name_parts << p.check_name()
+	for p.tok.kind == .dot {
+		p.next()
+		name_parts << p.check_name()
+	}
+	alias := name_parts.last()
+	p.import_aliases << alias
+	node := ast.Import{
+		name: name_parts.join('.')
+		alias: alias
+	}
+	p.imports << node
+	return node
 }
 
 fn (mut p Parser) package_decl() ast.PackageDecl {

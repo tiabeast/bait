@@ -55,6 +55,8 @@ pub enum Kind {
 	key_fun
 	key_global
 	key_if
+	key_import
+	key_not
 	key_or
 	key_package
 	key_return
@@ -72,6 +74,8 @@ pub const keywords = {
 	'fun':     Kind.key_fun
 	'global':  Kind.key_global
 	'if':      Kind.key_if
+	'import':  Kind.key_import
+	'not':     Kind.key_not
 	'or':      Kind.key_or
 	'package': Kind.key_package
 	'return':  Kind.key_return
@@ -85,6 +89,7 @@ pub enum Precedence {
 	compare
 	sum
 	product
+	prefix
 	call
 	index
 }
@@ -95,6 +100,8 @@ fn build_precedences() []Precedence {
 	mut p := []Precedence{len: int(Kind.key_true) + 1}
 	p[Kind.lbr] = .index
 	p[Kind.dot] = .call
+	p[Kind.key_not] = .prefix
+	p[Kind.amp] = .prefix
 	// * / %
 	p[Kind.mul] = .product
 	p[Kind.div] = .product
@@ -145,6 +152,7 @@ pub fn (k Kind) cstr() string {
 		.le { '<=' }
 		.ge { '>=' }
 		.key_and { '&&' }
+		.key_not { '!' }
 		.key_or { '||' }
 		else { k.str() }
 	}

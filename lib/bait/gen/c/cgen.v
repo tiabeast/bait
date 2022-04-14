@@ -7,7 +7,7 @@ import strings
 import lib.bait.ast
 import lib.bait.pref
 
-const c_reserved = ['calloc', 'main', 'malloc']
+const c_reserved = ['calloc', 'exit', 'main', 'malloc']
 
 const builtin_struct_types = ['array', 'string']
 
@@ -145,14 +145,14 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 }
 
 fn (mut g Gen) write_c_init() {
-	g.writeln('void bait_init() {')
+	g.writeln('void bait_init(int argc, char* argv[]) {')
 	g.write(g.global_inits.str())
 	g.writeln('}\n')
 }
 
 fn (mut g Gen) c_test_main() {
 	g.writeln('int main(int argc, char* argv[]) {')
-	g.writeln('\tbait_init();')
+	g.writeln('\tbait_init(argc, argv);')
 	for _, f in g.table.fns {
 		if f.is_test {
 			cfname := c_name(f.name)
@@ -167,7 +167,7 @@ fn (mut g Gen) c_test_main() {
 
 fn (mut g Gen) c_main() {
 	g.writeln('int main(int argc, char* argv[]) {')
-	g.writeln('\tbait_init();')
+	g.writeln('\tbait_init(argc, argv);')
 	g.writeln('\tmain__main();')
 	g.writeln('\treturn 0;')
 	g.writeln('}')
@@ -192,6 +192,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
 		ast.GlobalDecl { g.global_decl(node) }
+		ast.Import {}
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // struct declarations are handled by write_types
@@ -290,7 +291,17 @@ fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 fn (mut g Gen) const_decl(node ast.ConstDecl) {
 	name := c_name(node.name).to_upper()
 	val := g.expr_string(node.expr)
-	g.type_impls.writeln('#define CONST_$name $val')
+
+	match node.expr {
+		ast.CallExpr {
+			typ := g.typ(node.typ)
+			g.type_defs.writeln('$typ CONST_$name;')
+			g.global_inits.writeln('\tCONST_$name = $val;')
+		}
+		else {
+			g.type_impls.writeln('#define CONST_$name $val')
+		}
+	}
 }
 
 fn (mut g Gen) for_loop(node ast.ForLoop) {
@@ -462,7 +473,7 @@ fn (mut g Gen) char_literal(node ast.CharLiteral) {
 fn (mut g Gen) ident(node ast.Ident) {
 	mut name := node.name
 	if node.kind == .constant {
-		name = 'CONST_$name'
+		name = c_name('CONST_$name').to_upper()
 	} else {
 		name = c_name(name)
 	}

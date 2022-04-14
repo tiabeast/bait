@@ -1,0 +1,78 @@
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert
+// Use of this code is governed by an MIT License (see LICENSE.md).
+
+package os
+
+const ARGS = init_os_args(C.argc, &&byte(C.argv))
+
+fun init_os_args(argc i32, argv &&byte) []string {
+	a := []string{len: argc}
+	for i:=0; i < argc; i += 1 {
+		a[i] = argv[i].cstring_to_string()
+	}
+	return a
+}
+
+fun setenv(name string, value string, overwrite bool){
+	C.setenv(name.str, value.str, overwrite)
+}
+
+fun getenv(key string) string {
+	s := &byte(C.getenv(key.str))
+	if s == &void(0) {
+		return ''
+	}
+	return s.cstring_to_string()
+}
+
+fun dir(path string) string{
+	if path.len == 0{
+		return '.'
+	}
+	pos := path.last_index('/')
+	if pos == -1 {
+		return '.'
+	}
+	if pos == 0 {
+		return '/'
+	}
+	return path.substr(0, pos)
+}
+
+fun join_path(base string, dirs []string) string {
+	path := base
+	for i:=0;i<dirs.len;i+=1{
+		d:=dirs[i]
+		path = path + '/' + d
+	}
+	return path
+}
+
+fun real_path(path string) string {
+	res := &byte(C.realpath(path.str, &void(0)))
+	return res.cstring_to_string()
+}
+
+fun executable()string{
+	result := &byte(calloc(4096))
+	count := i32(C.readlink('/proc/self/exe', result, 4096))
+	return result.cstring_to_string()
+}
+
+fun exists(path string) bool {
+	return C.access(path.str, 0) != -1
+}
+
+fun read_file(path string) string {
+	fp := &void(0)
+	fp = C.fopen(path.str, 'rb')
+	C.fseek(fp, 0, C.SEEK_END)
+	fsize := int(C.ftell(fp))
+	C.rewind(fp)
+	str := malloc(fsize + 1)
+	nelements := int(C.fread(str, 1, fsize, fp))
+	str[nelements] = 0
+	C.fclose(fp)
+	return str.string_with_len(nelements)
+}
