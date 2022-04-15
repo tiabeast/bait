@@ -11,16 +11,18 @@ import lib.bait.parser
 import lib.bait.checker
 import lib.bait.gen.c as cgen
 
+const bait_tools = ['help']
+
 fn main() {
 	args := os.args[1..]
 	if args.len == 0 {
-		launch_bait_tool('help', args)
+		exit(launch_bait_tool('help', args))
 	}
 	prefs, command := parse_args(args)
+	if command in bait_tools {
+		exit(launch_bait_tool(command, args))
+	}
 	match command {
-		'help' {
-			launch_bait_tool('help', args)
-		}
 		'test' {
 			run_tests(args[1..], prefs)
 			return
@@ -230,32 +232,17 @@ fn bait_files_from_dir(dir string) []string {
 	return files
 }
 
-fn should_recompile_tool(tool_exe string, tool_source string) bool {
-	if !os.exists(tool_exe) {
-		return true
-	}
-	last_exe_mod := os.file_last_mod_unix(tool_exe)
-	last_source_mod := os.file_last_mod_unix(tool_source)
-	if last_exe_mod <= last_source_mod {
-		return true
-	}
-	// TODO check for modified imports, until then return always true
-	return true
-}
-
-fn launch_bait_tool(name string, args []string) {
+fn launch_bait_tool(name string, args []string) int {
 	exe := os.executable()
 	exe_root := os.dir(os.real_path(exe))
 	tool_path := os.join_path(exe_root, 'cmd', 'tools', name)
 	tool_source := tool_path + '.bait'
-	if should_recompile_tool(tool_path, tool_source) {
-		cret := os.system('bait "$tool_source"')
-		if cret != 0 {
-			exit(cret)
-		}
+	cret := os.system('bait "$tool_source"')
+	if cret != 0 {
+		return cret
 	}
 	tool_args := args.join(' ')
-	exit(os.system('$tool_path $tool_args'))
+	return os.system('$tool_path $tool_args')
 }
 
 fn order_deps(mut ordered []string, mod string, deps map[string][]string) []string {

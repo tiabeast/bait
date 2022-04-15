@@ -1,7 +1,6 @@
 // This file is part of: bait.
 // Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
-
 package os
 
 const ARGS = init_os_args(C.argc, &&byte(C.argv))
@@ -30,7 +29,7 @@ fun dir(path string) string{
 	if path.len == 0{
 		return '.'
 	}
-	pos := path.last_index('/')
+	pos := path.index_last('/')
 	if pos == -1 {
 		return '.'
 	}

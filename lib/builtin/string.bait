@@ -1,7 +1,6 @@
 // This file is part of: bait.
-// Copyright (c) 2022 Lukas Neubert
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
-
 package builtin
 
 struct string{
@@ -90,11 +89,15 @@ fun(s string)contains(substr string)bool{
 	return true
 }
 
-fun (s string) index(substr string) int {
-	if substr.len > s.len or substr.len == 0 {
+fun (s string) index(substr string) i32 {
+	return s.index_after(substr, 0)
+}
+
+fun (s string) index_after(substr string, start i32) i32 {
+	if substr.len > s.len or substr.len == 0 or start >= s.len {
 		return -1
 	}
-	i := 0
+	i := start
 	for i < s.len {
 		j := 0
 		for j < substr.len and s.str[i + j] == substr.str[j] {
@@ -108,7 +111,7 @@ fun (s string) index(substr string) int {
 	return -1
 }
 
-fun (s string) last_index(substr string) int {
+fun (s string) index_last(substr string) i32 {
 	if substr.len > s.len or substr.len == 0 {
 		return -1
 	}
@@ -124,6 +127,22 @@ fun (s string) last_index(substr string) int {
 		i -= 1
 	}
 	return -1
+}
+
+fun (s string) count (substr string) i32 {
+	if s.len == 0 or substr.len == 0 or substr.len > s.len {
+		return 0
+	}
+	n := 0
+	i := 0
+	for true {
+		i = s.index_after(substr, i)
+		if i == -1 {
+			return n
+		}
+		i += substr.len
+		n += 1
+	}
 }
 
 fun (s string) at(i i32) byte {
