@@ -55,7 +55,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.BoolLiteral { return ast.bool_type }
 		ast.CallExpr { return c.call_expr(mut node) }
 		ast.CastExpr { return c.cast_expr(mut node) }
-		ast.CharLiteral { return ast.byte_type }
+		ast.CharLiteral { return ast.u8_type }
 		ast.Ident { return c.ident(mut node) }
 		ast.IfExpr { return c.if_expr(mut node) }
 		ast.IndexExpr { return c.index_expr(mut node) }
@@ -242,7 +242,7 @@ fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 		return (sym.info as ast.ArrayInfo).elem_type
 	}
 	if sym.kind == .string {
-		return ast.byte_type
+		return ast.u8_type
 	}
 	return node.left_type
 }

@@ -22,34 +22,17 @@ fn (mut p Parser) parse_type() ast.Type {
 	name := p.tok.lit
 	p.next()
 	match name {
-		'byte' {
-			typ = ast.byte_type
-		}
-		'i8' {
-			typ = ast.i8_type
-		}
-		'i16' {
-			typ = ast.i16_type
-		}
-		'i32' {
-			typ = ast.i32_type
-		}
-		'i64' {
-			typ = ast.i64_type
-		}
-		'bool' {
-			typ = ast.bool_type
-		}
-		'string' {
-			typ = ast.string_type
-		}
-		else {
-			mut idx := p.table.type_idxs[name]
-			if idx == 0 {
-				idx = p.table.add_placeholder_type(name)
-			}
-			typ = ast.new_type(idx)
-		}
+		'i8' { typ = ast.i8_type }
+		'i16' { typ = ast.i16_type }
+		'i32' { typ = ast.i32_type }
+		'i64' { typ = ast.i64_type }
+		'u8' { typ = ast.u8_type }
+		'u16' { typ = ast.u16_type }
+		'u32' { typ = ast.u32_type }
+		'u64' { typ = ast.u64_type }
+		'bool' { typ = ast.bool_type }
+		'string' { typ = ast.string_type }
+		else { typ = p.table.placeholder_or_new_type(name) }
 	}
 	if nr_amp > 0 {
 		typ = typ.set_nr_amp(nr_amp)
