@@ -257,7 +257,7 @@ fn (t Tokenizer) new_eof_token() token.Token {
 	}
 }
 
-fn (t Tokenizer) next_char() byte {
+fn (t Tokenizer) next_char() char {
 	return if t.pos + 1 < t.text.len { t.text[t.pos + 1] } else { `\0` }
 }
 
@@ -286,10 +286,10 @@ fn (t Tokenizer) error(msg string) {
 	exit(1)
 }
 
-fn is_name_start_char(c byte) bool {
+fn is_name_start_char(c char) bool {
 	return (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || c == `_`
 }
 
-fn is_name_char(c byte) bool {
+fn is_name_char(c char) bool {
 	return is_name_start_char(c) || (c >= `0` && c <= `9`)
 }
