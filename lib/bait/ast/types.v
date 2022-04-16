@@ -1,5 +1,5 @@
-// This file is part of: bait programming language
-// Copyright (c) 2022 Lukas Neubert
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
 module ast
 
@@ -21,15 +21,19 @@ pub:
 pub enum TypeKind {
 	placeholder
 	void
-	byte
 	i8
 	i16
 	i32
 	i64
+	u8
+	u16
+	u32
+	u64
 	bool
 	string
 	array
 	struct_
+	map
 }
 
 pub enum Language {
@@ -37,41 +41,63 @@ pub enum Language {
 	c
 }
 
-const (
-	void_type_idx   = 1
-	byte_type_idx   = 2
-	i8_type_idx     = 3
-	i16_type_idx    = 4
-	i32_type_idx    = 5
-	i64_type_idx    = 6
-	bool_type_idx   = 7
-	string_type_idx = 8
-	array_type_idx  = 9
-)
+enum TypeIdx {
+	void_idx = 1
+	i8_idx
+	i16_idx
+	i32_idx
+	i64_idx
+	u8_idx
+	u16_idx
+	u32_idx
+	u64_idx
+	bool_idx
+	string_idx
+	array_idx
+	map_idx
+}
 
 pub const (
-	void_type   = new_type(void_type_idx)
-	byte_type   = new_type(byte_type_idx)
-	i8_type     = new_type(i8_type_idx)
-	i16_type    = new_type(i16_type_idx)
-	i32_type    = new_type(i32_type_idx)
-	i64_type    = new_type(i64_type_idx)
-	bool_type   = new_type(bool_type_idx)
-	string_type = new_type(string_type_idx)
-	array_type  = new_type(array_type_idx)
+	void_type   = new_builtin_type(.void_idx)
+	i8_type     = new_builtin_type(.i8_idx)
+	i16_type    = new_builtin_type(.i16_idx)
+	i32_type    = new_builtin_type(.i32_idx)
+	i64_type    = new_builtin_type(.i64_idx)
+	u8_type     = new_builtin_type(.u8_idx)
+	u16_type    = new_builtin_type(.u16_idx)
+	u32_type    = new_builtin_type(.u32_idx)
+	u64_type    = new_builtin_type(.u64_idx)
+	bool_type   = new_builtin_type(.bool_idx)
+	string_type = new_builtin_type(.string_idx)
+	array_type  = new_builtin_type(.array_idx)
+	map_type    = new_builtin_type(.map_idx)
 )
+
+const builtin_struct_types = [
+	int(TypeIdx.string_idx),
+	int(TypeIdx.array_idx),
+	int(TypeIdx.map_idx),
+]
 
 fn (mut t Table) register_builtin_type_symbols() {
 	t.register_type_symbol(kind: .placeholder, name: 'placeholder')
 	t.register_type_symbol(kind: .void, name: 'void')
-	t.register_type_symbol(kind: .byte, name: 'byte')
 	t.register_type_symbol(kind: .i8, name: 'i8')
 	t.register_type_symbol(kind: .i16, name: 'i16')
 	t.register_type_symbol(kind: .i32, name: 'i32')
 	t.register_type_symbol(kind: .i64, name: 'i64')
+	t.register_type_symbol(kind: .u8, name: 'u8')
+	t.register_type_symbol(kind: .u16, name: 'u16')
+	t.register_type_symbol(kind: .u32, name: 'u32')
+	t.register_type_symbol(kind: .u64, name: 'u64')
 	t.register_type_symbol(kind: .bool, name: 'bool')
 	t.register_type_symbol(kind: .string, name: 'string')
 	t.register_type_symbol(kind: .array, name: 'array')
+	t.register_type_symbol(kind: .map, name: 'map')
+}
+
+fn new_builtin_type(tidx TypeIdx) Type {
+	return new_type(int(tidx))
 }
 
 pub fn new_type(idx int) Type {

@@ -4,18 +4,18 @@
 package builtin
 
 struct string{
-	str &byte
+	str &u8
 	len i32
 }
 
-fun (bp &byte) string_with_len(len i32) string {
+fun (bp &u8) string_with_len(len i32) string {
 	return string{
 		str: bp
 		len: len
 	}
 }
 
-fun (bp &byte) cstring_to_string() string {
+fun (bp &u8) cstring_to_string() string {
 	return string{
 		str: bp
 		len: C.strlen(bp)
@@ -23,7 +23,7 @@ fun (bp &byte) cstring_to_string() string {
 }
 
 fun (s string) to_lower()string{
-	buf := []byte{len: s.len}
+	buf := []u8{len: s.len}
 	for i := 0; i < s.len; i += 1 {
 		c := s[i]
 		if c >= `A` and c <= `Z` {
@@ -145,7 +145,7 @@ fun (s string) count (substr string) i32 {
 	}
 }
 
-fun (s string) at(i i32) byte {
+fun (s string) at(i i32) u8 {
 	return s.str[i]
 }
 

@@ -1,5 +1,5 @@
-// This file is part of: bait programming language
-// Copyright (c) 2022 Lukas Neubert
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
 package builtin
 
@@ -66,12 +66,12 @@ fun (a &array) ensure_cap(required i32) {
 
 fun (a &array) push(val &void) {
 	a.ensure_cap(a.len + 1)
-	C.memmove(&byte(a.data) + a.elem_size * a.len, val, a.elem_size)
+	C.memmove(&u8(a.data) + a.elem_size * a.len, val, a.elem_size)
 	a.len += 1
 }
 
 fun (a array) slice(start i32, end i32) array {
-	data := &byte(a.data) + start * a.elem_size
+	data := &u8(a.data) + start * a.elem_size
 	len := end - start
 	return array{
 		elem_size: a.elem_size

@@ -19,7 +19,7 @@ fun (n i32) str() string{
 
 fun (n i64) str() string{
 	max := 20
-	buf := []byte{len: max}
+	buf := []u8{len: max}
 	i := max
 
 	is_neg := false
@@ -49,4 +49,25 @@ fun (n i64) str() string{
 	}
 
 	return buf.slice(i, buf.len).str()
+}
+
+fun (b u8) ascii_str() string {
+	s := string{
+		str: malloc(2)
+		len: 1
+	}
+
+	s.str[0] = b
+	s.str[1] = 0
+	return s
+}
+
+fun (b []u8) str() string {
+	buf := malloc(b.len + 1)
+	C.memcpy(buf, b.data, b.len)
+	buf[b.len] = 0
+	return string{
+		str: buf
+		len: b.len
+	}
 }

@@ -34,7 +34,7 @@ pub fn (mut t Table) register_type_symbol(sym TypeSymbol) int {
 		if existing_sym.kind == .placeholder {
 			t.type_symbols[idx] = sym
 			return idx
-		} else if idx == string_type_idx || idx == array_type_idx {
+		} else if idx in builtin_struct_types {
 			mut updated_sym := sym
 			updated_sym.kind = existing_sym.kind
 			t.type_symbols[idx] = updated_sym
@@ -57,7 +57,7 @@ pub fn (mut t Table) find_or_register_array(elem_type Type) int {
 	sym := TypeSymbol{
 		kind: .array
 		name: name
-		parent_idx: array_type_idx
+		parent_idx: int(TypeIdx.array_idx)
 		info: ArrayInfo{
 			elem_type: elem_type
 		}
@@ -71,6 +71,14 @@ pub fn (mut t Table) add_placeholder_type(name string) int {
 		name: name
 	}
 	return t.register_type_symbol(sym)
+}
+
+pub fn (mut t Table) placeholder_or_new_type(name string) Type {
+	mut idx := t.type_idxs[name]
+	if idx == 0 {
+		idx = t.add_placeholder_type(name)
+	}
+	return new_type(idx)
 }
 
 pub fn (t &Table) get_method(s &TypeSymbol, name string) ?FunDecl {

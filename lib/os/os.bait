@@ -3,9 +3,9 @@
 // Use of this code is governed by an MIT License (see LICENSE.md).
 package os
 
-const ARGS = init_os_args(C.argc, &&byte(C.argv))
+const ARGS = init_os_args(C.argc, &&u8(C.argv))
 
-fun init_os_args(argc i32, argv &&byte) []string {
+fun init_os_args(argc i32, argv &&u8) []string {
 	a := []string{len: argc}
 	for i:=0; i < argc; i += 1 {
 		a[i] = argv[i].cstring_to_string()
@@ -18,7 +18,7 @@ fun setenv(name string, value string, overwrite bool){
 }
 
 fun getenv(key string) string {
-	s := &byte(C.getenv(key.str))
+	s := &u8(C.getenv(key.str))
 	if s == &void(0) {
 		return ''
 	}
@@ -49,12 +49,12 @@ fun join_path(base string, dirs []string) string {
 }
 
 fun real_path(path string) string {
-	res := &byte(C.realpath(path.str, &void(0)))
+	res := &u8(C.realpath(path.str, &void(0)))
 	return res.cstring_to_string()
 }
 
 fun executable()string{
-	result := &byte(calloc(4096))
+	result := &u8(calloc(4096))
 	count := i32(C.readlink('/proc/self/exe', result, 4096))
 	return result.cstring_to_string()
 }
