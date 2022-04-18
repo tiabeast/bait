@@ -39,3 +39,16 @@ fn (mut p Parser) parse_type() ast.Type {
 	}
 	return typ
 }
+
+fn (mut p Parser) parse_map_type() ast.Type {
+	p.next()
+	if p.tok.kind != .lbr {
+		return ast.map_type
+	}
+	p.check(.lbr)
+	key_type := p.parse_type()
+	p.check(.rbr)
+	val_type := p.parse_type()
+	idx := p.table.find_or_register_map(key_type, val_type)
+	return ast.new_type(idx)
+}

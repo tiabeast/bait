@@ -61,6 +61,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.IndexExpr { return c.index_expr(mut node) }
 		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
+		ast.MapInit { return c.map_init(mut node) }
 		ast.PrefixExpr { return c.prefix_expr(mut node) }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
 		ast.StringLiteral { return ast.string_type }
@@ -241,6 +242,9 @@ fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 	if sym.kind == .array {
 		return (sym.info as ast.ArrayInfo).elem_type
 	}
+	if sym.kind == .map {
+		return (sym.info as ast.MapInfo).val_type
+	}
 	if sym.kind == .string {
 		return ast.u8_type
 	}
@@ -251,6 +255,13 @@ fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
 	node.left_type = c.expr(mut node.left)
 	node.right_type = c.expr(mut node.right)
 	return node.left_type
+}
+
+fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
+	info := c.table.get_type_symbol(node.typ).info as ast.MapInfo
+	node.key_type = info.key_type
+	node.val_type = info.val_type
+	return node.typ
 }
 
 fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {
@@ -275,6 +286,7 @@ fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
 				}
 			}
 		}
+		ast.MapInfo {}
 		ast.OtherInfo {}
 	}
 	return node.field_type

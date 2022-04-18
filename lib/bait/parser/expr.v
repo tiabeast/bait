@@ -271,6 +271,13 @@ fn (mut p Parser) integer_literal() ast.IntegerLiteral {
 	}
 }
 
+fn (mut p Parser) map_type_init() ast.MapInit {
+	typ := p.parse_map_type()
+	return ast.MapInit{
+		typ: typ
+	}
+}
+
 fn (mut p Parser) name_expr() ast.Expr {
 	mut lang := ast.Language.bait
 	if p.tok.lit == 'C' {
@@ -290,6 +297,8 @@ fn (mut p Parser) name_expr() ast.Expr {
 		return p.call_expr(lang)
 	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
 		return p.struct_init()
+	} else if p.tok.lit == 'map' && p.peek_tok.kind == .lbr {
+		return p.map_type_init()
 	}
 	return p.ident(lang)
 }

@@ -4,5 +4,41 @@
 package builtin
 
 struct map {
+	// TODO nested arr &void
+	key_vals []string
+	size i32
+}
 
+const LOAD_FACTOR = 15 / 2
+
+fun new_map() map {
+	return map{
+		key_vals: []string{len: 8}
+	}
+}
+
+fun (m &map) set(key string, val &void) {
+	m.size += 1
+	new_load := m.size / m.key_vals.len
+	if new_load > LOAD_FACTOR {
+		m.resize()
+	}
+	idx := calc_hash(key, m.key_vals.len)
+	m.key_vals[idx] = val
+}
+
+fun (m &map) get(key string) &void {
+	idx := calc_hash(key, m.key_vals.len)
+	return m.key_vals[idx]
+}
+
+fun (m &map) resize() {
+}
+
+fun calc_hash(s string, size i32) i32 {
+	hash := 17
+	for i:=0; i<s.len; i+=1{
+		hash = 13 * hash * s[i] % size
+	}
+	return hash
 }
