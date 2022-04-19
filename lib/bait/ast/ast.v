@@ -15,6 +15,7 @@ pub type Stmt = AssertStmt
 	| FunDecl
 	| GlobalDecl
 	| Import
+	| LoopControlStmt
 	| PackageDecl
 	| Return
 	| StructDecl
@@ -24,11 +25,13 @@ pub type Expr = ArrayInit
 	| CastExpr
 	| CharLiteral
 	| EmptyExpr
+	| FloatLiteral
 	| Ident
 	| IfExpr
 	| IndexExpr
 	| InfixExpr
 	| IntegerLiteral
+	| MapInit
 	| PrefixExpr
 	| SelectorExpr
 	| StringLiteral
@@ -118,6 +121,11 @@ pub:
 	alias string
 }
 
+pub struct LoopControlStmt {
+pub:
+	kind token.Kind
+}
+
 pub struct PackageDecl {
 pub:
 	name string
@@ -183,6 +191,11 @@ pub:
 	val string
 }
 
+pub struct FloatLiteral {
+pub:
+	val string
+}
+
 pub enum IdentKind {
 	unresolved
 	variable
@@ -215,9 +228,10 @@ pub mut:
 
 pub struct IndexExpr {
 pub mut:
-	index     Expr
-	left      Expr
-	left_type Type
+	index       Expr
+	left        Expr
+	left_type   Type
+	is_selector bool
 }
 
 pub struct InfixExpr {
@@ -233,6 +247,15 @@ pub:
 pub struct IntegerLiteral {
 pub:
 	val string
+}
+
+pub struct MapInit {
+pub mut:
+	typ      Type
+	key_type Type
+	val_type Type
+	keys     []Expr
+	vals     []Expr
 }
 
 pub struct PrefixExpr {

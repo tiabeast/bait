@@ -19,7 +19,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		}
 		.minus {
 			if p.peek_tok.kind == .number {
-				node = p.integer_literal()
+				node = p.number_literal()
 			} else {
 				node = p.prefix_expr()
 			}
@@ -28,7 +28,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 			node = p.name_expr()
 		}
 		.number {
-			node = p.integer_literal()
+			node = p.number_literal()
 		}
 		.string {
 			node = p.string_literal()
@@ -75,11 +75,9 @@ fn (mut p Parser) array_init() ast.ArrayInit {
 	p.check(.lbr)
 	if p.tok.kind == .rbr {
 		p.next()
-		if p.tok.kind == .name {
-			elem_type = p.parse_type()
-			idx := p.table.find_or_register_array(elem_type)
-			arr_type = ast.new_type(idx)
-		}
+		elem_type = p.parse_type()
+		idx := p.table.find_or_register_array(elem_type)
+		arr_type = ast.new_type(idx)
 		if p.tok.kind == .lcur {
 			p.next()
 			for p.tok.kind != .rcur {
@@ -246,28 +244,20 @@ fn (mut p Parser) index_expr(left ast.Expr) ast.IndexExpr {
 }
 
 fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
-	op := p.tok.kind
+	op_tok := p.tok
 	p.next()
-	right := p.expr(0)
+	right := p.expr(op_tok.precedence())
 	return ast.InfixExpr{
 		left: left
 		right: right
-		op: op
+		op: op_tok.kind
 	}
 }
 
-fn (mut p Parser) integer_literal() ast.IntegerLiteral {
-	is_neg := p.tok.kind == .minus
-	if is_neg {
-		p.next()
-	}
-	mut val := p.tok.lit
-	if is_neg {
-		val = '-$val'
-	}
-	p.next()
-	return ast.IntegerLiteral{
-		val: val
+fn (mut p Parser) map_type_init() ast.MapInit {
+	typ := p.parse_map_type()
+	return ast.MapInit{
+		typ: typ
 	}
 }
 
@@ -290,8 +280,30 @@ fn (mut p Parser) name_expr() ast.Expr {
 		return p.call_expr(lang)
 	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
 		return p.struct_init()
+	} else if p.tok.lit == 'map' && p.peek_tok.kind == .lbr {
+		return p.map_type_init()
 	}
 	return p.ident(lang)
+}
+
+fn (mut p Parser) number_literal() ast.Expr {
+	is_neg := p.tok.kind == .minus
+	if is_neg {
+		p.next()
+	}
+	mut val := p.tok.lit
+	if is_neg {
+		val = '-$val'
+	}
+	p.next()
+	if val.contains('.') {
+		return ast.FloatLiteral{
+			val: val
+		}
+	}
+	return ast.IntegerLiteral{
+		val: val
+	}
 }
 
 fn (mut p Parser) prefix_expr() ast.PrefixExpr {

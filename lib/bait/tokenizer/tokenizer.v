@@ -236,6 +236,15 @@ fn (mut t Tokenizer) number_literal() string {
 		}
 		t.pos++
 	}
+	if t.text[t.pos] == `.` && t.text[t.pos + 1].is_digit() {
+		t.pos++
+		for {
+			if !t.text[t.pos].is_digit() {
+				break
+			}
+			t.pos++
+		}
+	}
 	lit := t.text[start_pos..t.pos]
 	t.pos--
 	return lit

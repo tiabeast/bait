@@ -65,6 +65,25 @@ pub fn (mut t Table) find_or_register_array(elem_type Type) int {
 	return t.register_type_symbol(sym)
 }
 
+pub fn (mut t Table) find_or_register_map(key_type Type, val_type Type) int {
+	key_sym := t.get_type_symbol(key_type)
+	val_sym := t.get_type_symbol(val_type)
+	name := 'map[$key_sym.name]$val_sym.name'
+	idx := t.type_idxs[name]
+	if idx > 0 {
+		return idx
+	}
+	map_type_sym := TypeSymbol{
+		kind: .map
+		name: name
+		info: MapInfo{
+			key_type: key_type
+			val_type: val_type
+		}
+	}
+	return t.register_type_symbol(map_type_sym)
+}
+
 pub fn (mut t Table) add_placeholder_type(name string) int {
 	sym := TypeSymbol{
 		kind: .placeholder

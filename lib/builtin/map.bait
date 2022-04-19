@@ -3,6 +3,80 @@
 // Use of this code is governed by an MIT License (see LICENSE.md).
 package builtin
 
-struct map {
+struct Element {
+	key string
+	val &void
+	next i32
+}
 
+struct map {
+	key_vals []Element
+	size i32
+}
+
+const LOAD_FACTOR = 0.75
+
+fun (key_vals []Element) insert_element(key string, val &void, idx i32) {
+	if key_vals[idx].key == '' or key_vals[idx].key == key {
+		key_vals[idx] = Element{key:key val:val next:-1}
+	} else {
+		next_idx := idx
+		for true {
+			next_idx += 1
+			if next_idx >= key_vals.len {
+				next_idx = 0
+			}
+			if key_vals[next_idx].key == '' {
+				key_vals[next_idx] = Element{key:key val:val next:-1}
+				break
+			}
+		}
+		key_vals[idx].next = next_idx
+	}
+}
+
+fun new_map() map {
+	return map{
+		key_vals: []Element{len: 8}
+	}
+}
+
+fun (m &map) set(key string, val &void) {
+	m.size += 1
+	new_load := f32(m.size) / m.key_vals.len
+	if new_load > LOAD_FACTOR {
+		m.grow()
+	}
+	idx := calc_hash(key, m.key_vals.len)
+	m.key_vals.insert_element(key, val, idx)
+}
+
+fun (m &map) get(key string) &void {
+	idx := calc_hash(key, m.key_vals.len)
+	el :=  m.key_vals[idx]
+	for el.key != key {
+		el = m.key_vals[el.next]
+	}
+	return el.val
+}
+
+fun (m &map) grow() {
+	old_key_vals := m.key_vals
+	m.key_vals = []Element{len: m.key_vals.len * 2}
+	for i := 0; i < old_key_vals.len; i += 1 {
+		el := old_key_vals[i]
+		if el.key.len == 0 {
+			continue
+		}
+		idx := calc_hash(el.key, m.key_vals.len)
+		m.key_vals.insert_element(el.key, el.val, idx)
+	}
+}
+
+fun calc_hash(s string, size i32) i32 {
+	hash := 17
+	for i:=0; i<s.len; i+=1{
+		hash = 13 * hash * s[i] % size
+	}
+	return hash
 }

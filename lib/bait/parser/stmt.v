@@ -9,6 +9,7 @@ fn (mut p Parser) stmt() ast.Stmt {
 	match p.tok.kind {
 		.name { return p.assign_or_expr_stmt() }
 		.key_assert { return p.assert_stmt() }
+		.key_break, .key_continue { return p.loop_control_stmt() }
 		.key_for { return p.for_stmt() }
 		.key_return { return p.return_stmt() }
 		else { return p.expr_stmt() }
@@ -209,6 +210,14 @@ fn (mut p Parser) import_stmt() ast.Import {
 	}
 	p.imports << node
 	return node
+}
+
+fn (mut p Parser) loop_control_stmt() ast.LoopControlStmt {
+	kind := p.tok.kind
+	p.next()
+	return ast.LoopControlStmt{
+		kind: kind
+	}
 }
 
 fn (mut p Parser) package_decl() ast.PackageDecl {

@@ -9,7 +9,7 @@ import lib.bait.pref
 
 const c_reserved = ['calloc', 'exit', 'main', 'malloc']
 
-const builtin_struct_types = ['array', 'string']
+const builtin_struct_types = ['array', 'map', 'string']
 
 struct Gen {
 	table &ast.Table
@@ -21,7 +21,7 @@ mut:
 	empty_line              bool
 	inside_for_classic_loop bool
 	is_assign_left_side     bool
-	is_array_set            bool
+	is_array_map_set        bool
 	cheaders                strings.Builder
 	global_inits            strings.Builder
 	type_defs               strings.Builder
@@ -129,6 +129,9 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 			ast.ArrayInfo {
 				g.type_defs.writeln('typedef array $cname;')
 			}
+			ast.MapInfo {
+				g.type_defs.writeln('typedef map $cname;')
+			}
 			ast.StructInfo {
 				g.type_defs.writeln('typedef struct $tsym.name $tsym.name;')
 				g.type_impls.writeln('struct $tsym.name {')
@@ -193,6 +196,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.FunDecl { g.fun_decl(node) }
 		ast.GlobalDecl { g.global_decl(node) }
 		ast.Import {}
+		ast.LoopControlStmt { g.loop_control_stmt(node) }
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // struct declarations are handled by write_types
@@ -210,10 +214,12 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.CallExpr { g.call_expr(node) }
 		ast.CastExpr { g.cast_expr(node) }
 		ast.CharLiteral { g.char_literal(node) }
+		ast.FloatLiteral { g.float_literal(node) }
 		ast.Ident { g.ident(node) }
 		ast.IfExpr { g.if_expr(node) }
 		ast.IndexExpr { g.index_expr(node) }
 		ast.InfixExpr { g.infix_expr(node) }
+		ast.MapInit { g.map_init(node) }
 		ast.PrefixExpr { g.prefix_expr(node) }
 		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.SelectorExpr { g.selector_expr(node) }
@@ -270,11 +276,11 @@ fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 	g.is_assign_left_side = true
 	g.expr(node.left)
 	g.is_assign_left_side = false
-	if g.is_array_set {
+	if g.is_array_map_set {
 		g.write('{')
 		g.expr(node.right)
 		g.writeln('});')
-		g.is_array_set = false
+		g.is_array_map_set = false
 		return
 	}
 	if node.op.is_math_assign() {
@@ -363,6 +369,10 @@ fn (mut g Gen) global_decl(node ast.GlobalDecl) {
 	g.type_defs.writeln('$typ $name;')
 	expr := g.expr_string(node.expr)
 	g.global_inits.writeln('\t$name = $expr;')
+}
+
+fn (mut g Gen) loop_control_stmt(node ast.LoopControlStmt) {
+	g.writeln('$node.kind.cstr();')
 }
 
 fn (mut g Gen) package_decl(node ast.PackageDecl) {
@@ -470,6 +480,10 @@ fn (mut g Gen) char_literal(node ast.CharLiteral) {
 	g.write("'$node.val'")
 }
 
+fn (mut g Gen) float_literal(node ast.FloatLiteral) {
+	g.write('$node.val')
+}
+
 fn (mut g Gen) ident(node ast.Ident) {
 	mut name := node.name
 	if node.kind == .constant {
@@ -502,8 +516,8 @@ fn (mut g Gen) index_expr(node ast.IndexExpr) {
 	if sym.kind == .array {
 		info := sym.info as ast.ArrayInfo
 		elem_type_str := g.typ(info.elem_type)
-		if g.is_assign_left_side {
-			g.is_array_set = true
+		if g.is_assign_left_side && !node.is_selector {
+			g.is_array_map_set = true
 			g.write('array_set(&')
 			g.expr(node.left)
 			g.write(', ')
@@ -511,6 +525,25 @@ fn (mut g Gen) index_expr(node ast.IndexExpr) {
 			g.write(', ($elem_type_str[])')
 		} else {
 			g.write('(*($elem_type_str*)(array_get(')
+			g.expr(node.left)
+			g.write(', ')
+			g.expr(node.index)
+			g.write(')))')
+		}
+	} else if sym.kind == .map {
+		if g.is_assign_left_side {
+			g.is_array_map_set = true
+			info := sym.info as ast.MapInfo
+			elem_type_str := g.typ(info.val_type)
+			g.write('map_set((map*)&')
+			g.expr(node.left)
+			g.write(', ')
+			g.expr(node.index)
+			g.write(', ($elem_type_str[])')
+		} else {
+			info := sym.info as ast.MapInfo
+			val_type_str := g.typ(info.val_type)
+			g.write('(*($val_type_str*)(map_get(&')
 			g.expr(node.left)
 			g.write(', ')
 			g.expr(node.index)
@@ -558,6 +591,10 @@ fn (mut g Gen) infix_expr(node ast.InfixExpr) {
 
 fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {
 	g.write(node.val)
+}
+
+fn (mut g Gen) map_init(node ast.MapInit) {
+	g.write('new_map()')
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
@@ -633,6 +670,9 @@ fn (mut g Gen) writeln(s string) {
 
 fn c_name(n string) string {
 	name := n.replace('.', '__').replace('[]', 'Array_')
+	if n.starts_with('map[') {
+		return n.replace_each(['[', '_', ']', '_'])
+	}
 	if name in c.c_reserved {
 		return 'bait_$name'
 	}

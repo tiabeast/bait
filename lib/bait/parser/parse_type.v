@@ -30,6 +30,8 @@ fn (mut p Parser) parse_type() ast.Type {
 		'u16' { typ = ast.u16_type }
 		'u32' { typ = ast.u32_type }
 		'u64' { typ = ast.u64_type }
+		'f32' { typ = ast.f32_type }
+		'f64' { typ = ast.f64_type }
 		'bool' { typ = ast.bool_type }
 		'string' { typ = ast.string_type }
 		else { typ = p.table.placeholder_or_new_type(name) }
@@ -38,4 +40,17 @@ fn (mut p Parser) parse_type() ast.Type {
 		typ = typ.set_nr_amp(nr_amp)
 	}
 	return typ
+}
+
+fn (mut p Parser) parse_map_type() ast.Type {
+	p.next()
+	if p.tok.kind != .lbr {
+		return ast.map_type
+	}
+	p.check(.lbr)
+	key_type := p.parse_type()
+	p.check(.rbr)
+	val_type := p.parse_type()
+	idx := p.table.find_or_register_map(key_type, val_type)
+	return ast.new_type(idx)
 }

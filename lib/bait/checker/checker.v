@@ -42,6 +42,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.FunDecl { c.fun_decl(mut node) }
 		ast.GlobalDecl { c.global_decl(mut node) }
 		ast.Import { c.import_stmt(node) }
+		ast.LoopControlStmt { c.loop_control_stmt(node) }
 		ast.PackageDecl { c.package_decl(node) }
 		ast.Return { c.return_stmt(mut node) }
 		ast.StructDecl { c.struct_decl(node) }
@@ -56,11 +57,13 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.CallExpr { return c.call_expr(mut node) }
 		ast.CastExpr { return c.cast_expr(mut node) }
 		ast.CharLiteral { return ast.u8_type }
+		ast.FloatLiteral { return ast.f32_type }
 		ast.Ident { return c.ident(mut node) }
 		ast.IfExpr { return c.if_expr(mut node) }
 		ast.IndexExpr { return c.index_expr(mut node) }
 		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
+		ast.MapInit { return c.map_init(mut node) }
 		ast.PrefixExpr { return c.prefix_expr(mut node) }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
 		ast.StringLiteral { return ast.string_type }
@@ -116,6 +119,9 @@ fn (mut c Checker) global_decl(mut node ast.GlobalDecl) {
 }
 
 fn (mut c Checker) import_stmt(node ast.Import) {
+}
+
+fn (mut c Checker) loop_control_stmt(node ast.LoopControlStmt) {
 }
 
 fn (mut c Checker) package_decl(node ast.PackageDecl) {
@@ -241,6 +247,9 @@ fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 	if sym.kind == .array {
 		return (sym.info as ast.ArrayInfo).elem_type
 	}
+	if sym.kind == .map {
+		return (sym.info as ast.MapInfo).val_type
+	}
 	if sym.kind == .string {
 		return ast.u8_type
 	}
@@ -253,12 +262,22 @@ fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
 	return node.left_type
 }
 
+fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
+	info := c.table.get_type_symbol(node.typ).info as ast.MapInfo
+	node.key_type = info.key_type
+	node.val_type = info.val_type
+	return node.typ
+}
+
 fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {
 	node.right_type = c.expr(mut node.right)
 	return node.right_type
 }
 
 fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
+	if mut node.expr is ast.IndexExpr {
+		node.expr.is_selector = true
+	}
 	node.expr_type = c.expr(mut node.expr)
 	fsym := c.table.get_type_symbol(node.expr_type)
 	match fsym.info {
@@ -275,6 +294,7 @@ fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
 				}
 			}
 		}
+		ast.MapInfo {}
 		ast.OtherInfo {}
 	}
 	return node.field_type
