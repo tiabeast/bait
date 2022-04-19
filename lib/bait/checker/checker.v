@@ -57,6 +57,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.CallExpr { return c.call_expr(mut node) }
 		ast.CastExpr { return c.cast_expr(mut node) }
 		ast.CharLiteral { return ast.u8_type }
+		ast.FloatLiteral { return ast.f32_type }
 		ast.Ident { return c.ident(mut node) }
 		ast.IfExpr { return c.if_expr(mut node) }
 		ast.IndexExpr { return c.index_expr(mut node) }

@@ -30,6 +30,8 @@ fn (mut p Parser) parse_type() ast.Type {
 		'u16' { typ = ast.u16_type }
 		'u32' { typ = ast.u32_type }
 		'u64' { typ = ast.u64_type }
+		'f32' { typ = ast.f32_type }
+		'f64' { typ = ast.f64_type }
 		'bool' { typ = ast.bool_type }
 		'string' { typ = ast.string_type }
 		else { typ = p.table.placeholder_or_new_type(name) }

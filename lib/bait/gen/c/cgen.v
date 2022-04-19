@@ -214,6 +214,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.CallExpr { g.call_expr(node) }
 		ast.CastExpr { g.cast_expr(node) }
 		ast.CharLiteral { g.char_literal(node) }
+		ast.FloatLiteral { g.float_literal(node) }
 		ast.Ident { g.ident(node) }
 		ast.IfExpr { g.if_expr(node) }
 		ast.IndexExpr { g.index_expr(node) }
@@ -477,6 +478,10 @@ fn (mut g Gen) cast_expr(node ast.CastExpr) {
 
 fn (mut g Gen) char_literal(node ast.CharLiteral) {
 	g.write("'$node.val'")
+}
+
+fn (mut g Gen) float_literal(node ast.FloatLiteral) {
+	g.write('$node.val')
 }
 
 fn (mut g Gen) ident(node ast.Ident) {

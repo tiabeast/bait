@@ -25,6 +25,7 @@ pub type Expr = ArrayInit
 	| CastExpr
 	| CharLiteral
 	| EmptyExpr
+	| FloatLiteral
 	| Ident
 	| IfExpr
 	| IndexExpr
@@ -186,6 +187,11 @@ pub mut:
 }
 
 pub struct CharLiteral {
+pub:
+	val string
+}
+
+pub struct FloatLiteral {
 pub:
 	val string
 }

@@ -29,6 +29,8 @@ pub enum TypeKind {
 	u16
 	u32
 	u64
+	f32
+	f64
 	bool
 	string
 	array
@@ -51,6 +53,8 @@ enum TypeIdx {
 	u16_idx
 	u32_idx
 	u64_idx
+	f32_idx
+	f64_idx
 	bool_idx
 	string_idx
 	array_idx
@@ -67,6 +71,8 @@ pub const (
 	u16_type    = new_builtin_type(.u16_idx)
 	u32_type    = new_builtin_type(.u32_idx)
 	u64_type    = new_builtin_type(.u64_idx)
+	f32_type    = new_builtin_type(.f32_idx)
+	f64_type    = new_builtin_type(.f64_idx)
 	bool_type   = new_builtin_type(.bool_idx)
 	string_type = new_builtin_type(.string_idx)
 	array_type  = new_builtin_type(.array_idx)
@@ -90,6 +96,8 @@ fn (mut t Table) register_builtin_type_symbols() {
 	t.register_type_symbol(kind: .u16, name: 'u16')
 	t.register_type_symbol(kind: .u32, name: 'u32')
 	t.register_type_symbol(kind: .u64, name: 'u64')
+	t.register_type_symbol(kind: .f32, name: 'f32')
+	t.register_type_symbol(kind: .f64, name: 'f64')
 	t.register_type_symbol(kind: .bool, name: 'bool')
 	t.register_type_symbol(kind: .string, name: 'string')
 	t.register_type_symbol(kind: .array, name: 'array')

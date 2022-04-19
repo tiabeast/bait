@@ -19,7 +19,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		}
 		.minus {
 			if p.peek_tok.kind == .number {
-				node = p.integer_literal()
+				node = p.number_literal()
 			} else {
 				node = p.prefix_expr()
 			}
@@ -28,7 +28,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 			node = p.name_expr()
 		}
 		.number {
-			node = p.integer_literal()
+			node = p.number_literal()
 		}
 		.string {
 			node = p.string_literal()
@@ -254,21 +254,6 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	}
 }
 
-fn (mut p Parser) integer_literal() ast.IntegerLiteral {
-	is_neg := p.tok.kind == .minus
-	if is_neg {
-		p.next()
-	}
-	mut val := p.tok.lit
-	if is_neg {
-		val = '-$val'
-	}
-	p.next()
-	return ast.IntegerLiteral{
-		val: val
-	}
-}
-
 fn (mut p Parser) map_type_init() ast.MapInit {
 	typ := p.parse_map_type()
 	return ast.MapInit{
@@ -299,6 +284,26 @@ fn (mut p Parser) name_expr() ast.Expr {
 		return p.map_type_init()
 	}
 	return p.ident(lang)
+}
+
+fn (mut p Parser) number_literal() ast.Expr {
+	is_neg := p.tok.kind == .minus
+	if is_neg {
+		p.next()
+	}
+	mut val := p.tok.lit
+	if is_neg {
+		val = '-$val'
+	}
+	p.next()
+	if val.contains('.') {
+		return ast.FloatLiteral{
+			val: val
+		}
+	}
+	return ast.IntegerLiteral{
+		val: val
+	}
 }
 
 fn (mut p Parser) prefix_expr() ast.PrefixExpr {
