@@ -75,11 +75,9 @@ fn (mut p Parser) array_init() ast.ArrayInit {
 	p.check(.lbr)
 	if p.tok.kind == .rbr {
 		p.next()
-		if p.tok.kind == .name {
-			elem_type = p.parse_type()
-			idx := p.table.find_or_register_array(elem_type)
-			arr_type = ast.new_type(idx)
-		}
+		elem_type = p.parse_type()
+		idx := p.table.find_or_register_array(elem_type)
+		arr_type = ast.new_type(idx)
 		if p.tok.kind == .lcur {
 			p.next()
 			for p.tok.kind != .rcur {
