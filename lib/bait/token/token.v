@@ -48,7 +48,9 @@ pub enum Kind {
 	ge // >=
 	key_and
 	key_assert
+	key_break
 	key_const
+	key_continue
 	key_else
 	key_false
 	key_for
@@ -65,22 +67,24 @@ pub enum Kind {
 }
 
 pub const keywords = {
-	'and':     Kind.key_and
-	'assert':  Kind.key_assert
-	'const':   Kind.key_const
-	'else':    Kind.key_else
-	'false':   Kind.key_false
-	'for':     Kind.key_for
-	'fun':     Kind.key_fun
-	'global':  Kind.key_global
-	'if':      Kind.key_if
-	'import':  Kind.key_import
-	'not':     Kind.key_not
-	'or':      Kind.key_or
-	'package': Kind.key_package
-	'return':  Kind.key_return
-	'struct':  Kind.key_struct
-	'true':    Kind.key_true
+	'and':      Kind.key_and
+	'assert':   Kind.key_assert
+	'break':    Kind.key_break
+	'const':    Kind.key_const
+	'continue': Kind.key_continue
+	'else':     Kind.key_else
+	'false':    Kind.key_false
+	'for':      Kind.key_for
+	'fun':      Kind.key_fun
+	'global':   Kind.key_global
+	'if':       Kind.key_if
+	'import':   Kind.key_import
+	'not':      Kind.key_not
+	'or':       Kind.key_or
+	'package':  Kind.key_package
+	'return':   Kind.key_return
+	'struct':   Kind.key_struct
+	'true':     Kind.key_true
 }
 
 pub enum Precedence {
@@ -154,6 +158,8 @@ pub fn (k Kind) cstr() string {
 		.key_and { '&&' }
 		.key_not { '!' }
 		.key_or { '||' }
+		.key_break { 'break' }
+		.key_continue { 'continue' }
 		else { k.str() }
 	}
 }

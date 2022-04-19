@@ -196,6 +196,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.FunDecl { g.fun_decl(node) }
 		ast.GlobalDecl { g.global_decl(node) }
 		ast.Import {}
+		ast.LoopControlStmt { g.loop_control_stmt(node) }
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // struct declarations are handled by write_types
@@ -367,6 +368,10 @@ fn (mut g Gen) global_decl(node ast.GlobalDecl) {
 	g.type_defs.writeln('$typ $name;')
 	expr := g.expr_string(node.expr)
 	g.global_inits.writeln('\t$name = $expr;')
+}
+
+fn (mut g Gen) loop_control_stmt(node ast.LoopControlStmt) {
+	g.writeln('$node.kind.cstr();')
 }
 
 fn (mut g Gen) package_decl(node ast.PackageDecl) {

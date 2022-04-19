@@ -42,6 +42,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.FunDecl { c.fun_decl(mut node) }
 		ast.GlobalDecl { c.global_decl(mut node) }
 		ast.Import { c.import_stmt(node) }
+		ast.LoopControlStmt { c.loop_control_stmt(node) }
 		ast.PackageDecl { c.package_decl(node) }
 		ast.Return { c.return_stmt(mut node) }
 		ast.StructDecl { c.struct_decl(node) }
@@ -117,6 +118,9 @@ fn (mut c Checker) global_decl(mut node ast.GlobalDecl) {
 }
 
 fn (mut c Checker) import_stmt(node ast.Import) {
+}
+
+fn (mut c Checker) loop_control_stmt(node ast.LoopControlStmt) {
 }
 
 fn (mut c Checker) package_decl(node ast.PackageDecl) {

@@ -15,6 +15,7 @@ pub type Stmt = AssertStmt
 	| FunDecl
 	| GlobalDecl
 	| Import
+	| LoopControlStmt
 	| PackageDecl
 	| Return
 	| StructDecl
@@ -117,6 +118,11 @@ pub struct Import {
 pub:
 	name  string
 	alias string
+}
+
+pub struct LoopControlStmt {
+pub:
+	kind token.Kind
 }
 
 pub struct PackageDecl {
