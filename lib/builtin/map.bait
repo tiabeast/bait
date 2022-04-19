@@ -3,17 +3,23 @@
 // Use of this code is governed by an MIT License (see LICENSE.md).
 package builtin
 
+struct Element {
+	key string
+	val &void
+	next i32
+}
+
 struct map {
-	// TODO nested arr &void
-	key_vals []string
+	key_vals []Element
 	size i32
 }
+
 
 const LOAD_FACTOR = 15 / 2
 
 fun new_map() map {
 	return map{
-		key_vals: []string{len: 8}
+		key_vals: []Element{len: 8}
 	}
 }
 
@@ -24,12 +30,31 @@ fun (m &map) set(key string, val &void) {
 		m.resize()
 	}
 	idx := calc_hash(key, m.key_vals.len)
-	m.key_vals[idx] = val
+	if m.key_vals[idx].key == '' or m.key_vals[idx].key == key {
+		m.key_vals[idx] = Element{key:key val:val next:-1}
+	} else {
+		next_idx := idx
+		for true {
+			next_idx += 1
+			if next_idx >= m.key_vals.len {
+				next_idx = 0
+			}
+			if m.key_vals[next_idx].key == '' {
+				m.key_vals[next_idx] = Element{key:key val:val next:-1}
+				break
+			}
+		}
+		m.key_vals[idx].next = next_idx
+	}
 }
 
 fun (m &map) get(key string) &void {
 	idx := calc_hash(key, m.key_vals.len)
-	return m.key_vals[idx]
+	el :=  m.key_vals[idx]
+	for el.key != key {
+		el = m.key_vals[el.next]
+	}
+	return el.val
 }
 
 fun (m &map) resize() {
