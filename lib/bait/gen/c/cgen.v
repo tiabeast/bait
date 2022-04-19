@@ -506,7 +506,7 @@ fn (mut g Gen) index_expr(node ast.IndexExpr) {
 	if sym.kind == .array {
 		info := sym.info as ast.ArrayInfo
 		elem_type_str := g.typ(info.elem_type)
-		if g.is_assign_left_side {
+		if g.is_assign_left_side && !node.is_selector {
 			g.is_array_map_set = true
 			g.write('array_set(&')
 			g.expr(node.left)

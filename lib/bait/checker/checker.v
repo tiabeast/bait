@@ -270,6 +270,9 @@ fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {
 }
 
 fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
+	if mut node.expr is ast.IndexExpr {
+		node.expr.is_selector = true
+	}
 	node.expr_type = c.expr(mut node.expr)
 	fsym := c.table.get_type_symbol(node.expr_type)
 	match fsym.info {

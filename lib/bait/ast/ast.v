@@ -219,6 +219,7 @@ pub mut:
 	index     Expr
 	left      Expr
 	left_type Type
+	is_selector bool
 }
 
 pub struct InfixExpr {
