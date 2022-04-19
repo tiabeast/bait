@@ -216,9 +216,9 @@ pub mut:
 
 pub struct IndexExpr {
 pub mut:
-	index     Expr
-	left      Expr
-	left_type Type
+	index       Expr
+	left        Expr
+	left_type   Type
 	is_selector bool
 }
 

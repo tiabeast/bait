@@ -244,13 +244,13 @@ fn (mut p Parser) index_expr(left ast.Expr) ast.IndexExpr {
 }
 
 fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
-	op := p.tok.kind
+	op_tok := p.tok
 	p.next()
-	right := p.expr(0)
+	right := p.expr(op_tok.precedence())
 	return ast.InfixExpr{
 		left: left
 		right: right
-		op: op
+		op: op_tok.kind
 	}
 }
 
