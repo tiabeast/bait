@@ -41,6 +41,16 @@ fun new_map() map {
 	}
 }
 
+fun new_map_init(size i32, key_size i32, keys &void, val_size i32, vals &void) map {
+	m := map{
+		key_vals: []Element{len: 8}
+	}
+	for i:=0; i < size; i += 1 {
+		&m.set(&string(keys + i * key_size).deref(), vals + i * val_size)
+	}
+	return m
+}
+
 fun (m &map) set(key string, val &void) {
 	m.size += 1
 	new_load := f32(m.size) / m.key_vals.len

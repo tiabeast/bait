@@ -17,6 +17,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.lbr {
 			node = p.array_init()
 		}
+		.lcur {
+			node = p.map_init()
+		}
 		.minus {
 			if p.peek_tok.kind == .number {
 				node = p.number_literal()
@@ -254,7 +257,24 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	}
 }
 
+fn (mut p Parser) map_init() ast.MapInit {
+	p.check(.lcur)
+	mut keys := []ast.Expr{}
+	mut vals := []ast.Expr{}
+	for p.tok.kind != .rcur {
+		keys << p.expr(0)
+		p.check(.colon)
+		vals << p.expr(0)
+	}
+	p.check(.rcur)
+	return ast.MapInit{
+		keys: keys
+		vals: vals
+	}
+}
+
 fn (mut p Parser) map_type_init() ast.MapInit {
+	p.next()
 	typ := p.parse_map_type()
 	return ast.MapInit{
 		typ: typ

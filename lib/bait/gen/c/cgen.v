@@ -472,8 +472,9 @@ fn (mut g Gen) gen_array_push(node ast.CallExpr, sym ast.TypeSymbol) {
 
 fn (mut g Gen) cast_expr(node ast.CastExpr) {
 	target_type_str := g.typ(node.target_type)
-	g.write('($target_type_str)')
+	g.write('($target_type_str)(')
 	g.expr(node.expr)
+	g.write(')')
 }
 
 fn (mut g Gen) char_literal(node ast.CharLiteral) {
@@ -594,7 +595,25 @@ fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {
 }
 
 fn (mut g Gen) map_init(node ast.MapInit) {
-	g.write('new_map()')
+	if node.vals.len == 0 {
+		g.write('new_map()')
+		return
+	}
+
+	len := node.keys.len
+	ktype := g.typ(node.key_type)
+	g.write('new_map_init($len, sizeof($ktype), ($ktype[$len]){')
+	for k in node.keys {
+		g.expr(k)
+		g.write(',')
+	}
+	vtype := g.typ(node.val_type)
+	g.write('}, sizeof($vtype), ($vtype[$len]){')
+	for v in node.vals {
+		g.expr(v)
+		g.write(',')
+	}
+	g.write('})')
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
