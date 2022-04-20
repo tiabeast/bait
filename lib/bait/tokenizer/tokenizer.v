@@ -90,8 +90,25 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				if nextc == `=` {
 					t.pos++
 					return t.new_token(.div_assign, '')
-				} else if nextc == `/` {
+				}
+				if nextc == `/` {
 					t.ignore_line()
+					continue
+				}
+				if nextc == `*` {
+					mut nest_count := 1
+					t.pos++
+					for nest_count > 0 {
+						t.pos ++
+						if t.text[t.pos] == `\n` {
+							t.line_nr++
+						} else if t.text[t.pos] == `/` && t.text[t.pos + 1] == `*` {
+							nest_count++
+						}else if t.text[t.pos] == `*` && t.text[t.pos + 1] == `/` {
+							nest_count--
+						}
+					}
+					t.pos++
 					continue
 				}
 				return t.new_token(.div, '')
