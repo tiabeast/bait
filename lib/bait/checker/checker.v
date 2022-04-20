@@ -263,9 +263,20 @@ fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
 }
 
 fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
-	info := c.table.get_type_symbol(node.typ).info as ast.MapInfo
-	node.key_type = info.key_type
-	node.val_type = info.val_type
+	if node.typ != 0 {
+		info := c.table.get_type_symbol(node.typ).info as ast.MapInfo
+		node.key_type = info.key_type
+		node.val_type = info.val_type
+		return node.typ
+	}
+	for mut k in node.keys {
+		node.key_type = c.expr(mut k)
+	}
+	for mut v in node.vals {
+		node.val_type = c.expr(mut v)
+	}
+	idx := c.table.find_or_register_map(node.key_type, node.val_type)
+	node.typ = ast.new_type(idx)
 	return node.typ
 }
 

@@ -34,6 +34,7 @@ fn (mut p Parser) parse_type() ast.Type {
 		'f64' { typ = ast.f64_type }
 		'bool' { typ = ast.bool_type }
 		'string' { typ = ast.string_type }
+		'map' { typ = p.parse_map_type() }
 		else { typ = p.table.placeholder_or_new_type(name) }
 	}
 	if nr_amp > 0 {
@@ -43,7 +44,6 @@ fn (mut p Parser) parse_type() ast.Type {
 }
 
 fn (mut p Parser) parse_map_type() ast.Type {
-	p.next()
 	if p.tok.kind != .lbr {
 		return ast.map_type
 	}
