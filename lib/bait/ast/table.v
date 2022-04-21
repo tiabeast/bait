@@ -84,6 +84,37 @@ pub fn (mut t Table) find_or_register_map(key_type Type, val_type Type) int {
 	return t.register_type_symbol(map_type_sym)
 }
 
+pub fn (mut t Table) find_or_register_fun_type(f FunDecl) int {
+	mut name := f.name
+	if name.len == 0 {
+		name = 'anon_fn_' + t.fun_type_signature(f)
+	}
+	existing_idx := t.type_idxs[name]
+	if existing_idx > 0 && t.type_symbols[existing_idx].kind != .placeholder {
+		return existing_idx
+	}
+	return t.register_type_symbol(
+		kind: .function
+		name: name
+		info: FunInfo{
+			decl: f
+		}
+	)
+}
+
+fn (t &Table) fun_type_signature(f FunDecl) string {
+	mut s := ''
+	for p in f.params{
+		sym := t.get_type_symbol(p.typ)
+		s += sym.name
+		s += '_'
+	}
+	rsym:=t.get_type_symbol(f.return_type)
+	s+='_'
+	s+=rsym.name
+	return s
+}
+
 pub fn (mut t Table) add_placeholder_type(name string) int {
 	sym := TypeSymbol{
 		kind: .placeholder

@@ -178,7 +178,7 @@ fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 		return ast.CallExpr{
 			name: name
 			args: args
-			receiver: left
+			left: left
 			is_method: true
 		}
 	}

@@ -5,7 +5,7 @@ module ast
 
 pub type Type = int
 
-pub type TypeInfo = ArrayInfo | MapInfo | OtherInfo | StructInfo
+pub type TypeInfo = ArrayInfo | MapInfo | OtherInfo | StructInfo|FunInfo
 
 [heap]
 pub struct TypeSymbol {
@@ -36,6 +36,7 @@ pub enum TypeKind {
 	array
 	struct_
 	map
+	function
 }
 
 pub enum Language {
@@ -146,6 +147,10 @@ pub struct OtherInfo {}
 pub struct ArrayInfo {
 pub:
 	elem_type Type
+}
+pub struct FunInfo {
+pub:
+	decl FunDecl
 }
 
 pub struct MapInfo {
