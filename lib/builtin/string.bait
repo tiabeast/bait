@@ -86,14 +86,57 @@ fun (s string) split(sep string) []string {
 	return res
 }
 
+fun (s string) replace(val string, with string) string {
+	if s.len == 0 or val.len == 0 or val.len > s.len {
+		return s
+	}
+	idxs := []int
+	i := 0
+	for  true {
+		i = s.index_after(val, i)
+		if i == -1 {
+			break
+		}
+		idxs.push(i)
+		i += val.len
+	}
+	if idxs.len == 0 {
+		return s
+	}
+	new_len := s.len + idxs.len * (with.len - val.len)
+	bytes := malloc(new_len + 1)
+	bi := 0
+	si := 0
+	for j := 0; j < idxs.len; j +=1{
+		val_pos := idxs[j]
+		for si < val_pos {
+			bytes[bi] = s[si]
+			bi += 1
+			si += 1
+		}
+		si += val.len
+		for w := 0; w < with.len; w+=1{
+			bytes[bi] = with[w]
+			bi += 1
+		}
+	}
+	for si < s.len {
+		bytes[bi] = s[si]
+		bi += 1
+		si += 1
+	}
+	bytes[new_len] = 0
+	return bytes.string_with_len(new_len)
+}
+
 fun(s string)contains(substr string)bool{
 	if substr.len == 0 {
 		return true
 	}
-	if s.index(substr) == -1 {
-		return false
+	if s.index(substr) > -1 {
+		return true
 	}
-	return true
+	return false
 }
 
 fun (s string) index(substr string) i32 {
