@@ -99,12 +99,12 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 					mut nest_count := 1
 					t.pos++
 					for nest_count > 0 {
-						t.pos ++
+						t.pos++
 						if t.text[t.pos] == `\n` {
 							t.line_nr++
 						} else if t.text[t.pos] == `/` && t.text[t.pos + 1] == `*` {
 							nest_count++
-						}else if t.text[t.pos] == `*` && t.text[t.pos + 1] == `/` {
+						} else if t.text[t.pos] == `*` && t.text[t.pos + 1] == `/` {
 							nest_count--
 						}
 					}

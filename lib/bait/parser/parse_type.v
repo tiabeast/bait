@@ -18,6 +18,9 @@ fn (mut p Parser) parse_type() ast.Type {
 		idx := p.table.find_or_register_array(arr_type)
 		return ast.new_type(idx)
 	}
+	if p.tok.kind == .key_fun {
+		return p.parse_fun_type('')
+	}
 	mut typ := ast.void_type
 	name := p.tok.lit
 	p.next()
@@ -52,5 +55,23 @@ fn (mut p Parser) parse_map_type() ast.Type {
 	p.check(.rbr)
 	val_type := p.parse_type()
 	idx := p.table.find_or_register_map(key_type, val_type)
+	return ast.new_type(idx)
+}
+
+fn (mut p Parser) parse_fun_type(name string) ast.Type {
+	p.next()
+	p.check(.lpar)
+	params := p.fun_params()
+	p.check(.rpar)
+	mut return_type := ast.void_type
+	if p.tok.pos.line_nr == p.prev_tok.pos.line_nr {
+		return_type = p.parse_type()
+	}
+	node := ast.FunDecl{
+		name: name
+		params: params
+		return_type: return_type
+	}
+	idx := p.table.find_or_register_fun_type(node)
 	return ast.new_type(idx)
 }

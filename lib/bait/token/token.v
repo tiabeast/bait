@@ -64,6 +64,8 @@ pub enum Kind {
 	key_return
 	key_struct
 	key_true
+	key_type
+	__end__
 }
 
 pub const keywords = {
@@ -85,6 +87,7 @@ pub const keywords = {
 	'return':   Kind.key_return
 	'struct':   Kind.key_struct
 	'true':     Kind.key_true
+	'type':     Kind.key_type
 }
 
 pub enum Precedence {
@@ -101,7 +104,7 @@ pub enum Precedence {
 const precedences = build_precedences()
 
 fn build_precedences() []Precedence {
-	mut p := []Precedence{len: int(Kind.key_true) + 1}
+	mut p := []Precedence{len: int(Kind.__end__)}
 	p[Kind.lbr] = .index
 	p[Kind.dot] = .call
 	p[Kind.key_not] = .prefix

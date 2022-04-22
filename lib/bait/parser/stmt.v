@@ -22,6 +22,7 @@ fn (mut p Parser) top_level_stmt() ast.Stmt {
 		.key_fun { return p.fun_decl() }
 		.key_global { return p.global_decl() }
 		.key_struct { return p.struct_decl() }
+		.key_type { return p.type_decl() }
 		else { p.error('bad toplevel stmt: $p.tok') }
 	}
 	return ast.EmptyStmt{}
@@ -263,4 +264,20 @@ fn (mut p Parser) struct_decl() ast.StructDecl {
 	}
 	p.table.register_type_symbol(tsym)
 	return ast.StructDecl{}
+}
+
+fn (mut p Parser) type_decl() ast.TypeDecl {
+	p.next()
+	name := p.check_name()
+	p.check(.assign)
+	mut typ := ast.void_type
+	if p.tok.kind == .key_fun {
+		typ = p.parse_fun_type(name)
+	} else {
+		typ = p.parse_type()
+	}
+	return ast.TypeDecl{
+		name: name
+		parent_type: typ
+	}
 }

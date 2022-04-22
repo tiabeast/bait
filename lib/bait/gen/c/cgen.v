@@ -129,6 +129,11 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 			ast.ArrayInfo {
 				g.type_defs.writeln('typedef array $cname;')
 			}
+			ast.FunInfo {
+				f := (tsym.info as ast.FunInfo).decl
+				return_str := g.typ(f.return_type)
+				g.type_defs.writeln('typedef $return_str (*$cname) ();')
+			}
 			ast.MapInfo {
 				g.type_defs.writeln('typedef map $cname;')
 			}
@@ -199,7 +204,8 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.LoopControlStmt { g.loop_control_stmt(node) }
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
-		ast.StructDecl {} // struct declarations are handled by write_types
+		ast.StructDecl {} // handled by write_types()
+		ast.TypeDecl {} // handled by write_types()
 	}
 	if node is ast.ExprStmt && !g.empty_line {
 		g.writeln(';')
@@ -429,7 +435,7 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 		name = node.name
 	}
 	if node.is_method {
-		sym := g.table.get_type_symbol(node.receiver_type)
+		sym := g.table.get_type_symbol(node.left_type)
 		if sym.kind == .array && name == 'slice' {
 			name = c_name('array_$name')
 		} else if sym.kind == .array && name == 'push' {
@@ -438,10 +444,12 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 		} else {
 			name = c_name('${sym.name}_$name')
 		}
+	} else if node.left is ast.IndexExpr {
+		g.expr(node.left)
 	}
 	g.write('${name}(')
 	if node.is_method {
-		g.expr(node.receiver)
+		g.expr(node.left)
 		if node.args.len > 0 {
 			g.write(', ')
 		}
@@ -464,7 +472,7 @@ fn (mut g Gen) gen_array_push(node ast.CallExpr, sym ast.TypeSymbol) {
 	info := sym.info as ast.ArrayInfo
 	elem_type_str := g.typ(info.elem_type)
 	g.write('array_push(&')
-	g.expr(node.receiver)
+	g.expr(node.left)
 	g.write(', ($elem_type_str[]){')
 	g.expr(node.args[0].expr)
 	g.write('})')
@@ -689,8 +697,8 @@ fn (mut g Gen) writeln(s string) {
 
 fn c_name(n string) string {
 	name := n.replace('.', '__').replace('[]', 'Array_')
-	if n.starts_with('map[') {
-		return n.replace_each(['[', '_', ']', '_'])
+	if name.starts_with('map[') {
+		return name.replace_each(['[', '_', ']', '_'])
 	}
 	if name in c.c_reserved {
 		return 'bait_$name'

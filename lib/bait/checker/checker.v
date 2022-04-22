@@ -46,6 +46,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.PackageDecl { c.package_decl(node) }
 		ast.Return { c.return_stmt(mut node) }
 		ast.StructDecl { c.struct_decl(node) }
+		ast.TypeDecl { c.type_decl(node) }
 	}
 }
 
@@ -85,6 +86,12 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 		node.left_type = typ
 		if mut node.left is ast.Ident {
 			node.left.scope.update_type(node.left.name, typ)
+			if node.right is ast.IndexExpr {
+				rsym := c.table.get_type_symbol(typ)
+				if rsym.kind == .function {
+					c.table.fns[node.left.name] = (rsym.info as ast.FunInfo).decl
+				}
+			}
 		}
 	} else {
 		c.expr(mut node.left)
@@ -137,6 +144,9 @@ fn (mut c Checker) return_stmt(mut node ast.Return) {
 fn (mut c Checker) struct_decl(node ast.StructDecl) {
 }
 
+fn (mut c Checker) type_decl(node ast.TypeDecl) {
+}
+
 fn (mut c Checker) array_init(mut node ast.ArrayInit) ast.Type {
 	if node.len_expr !is ast.EmptyExpr {
 		c.expr(mut node.len_expr)
@@ -176,6 +186,19 @@ fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 			node.name = full_name
 		}
 	}
+	if !found && node.left is ast.IndexExpr {
+		c.expr(mut node.left)
+		sym := c.table.get_type_symbol(node.left_type)
+		if sym.kind == .map {
+			info := sym.info as ast.MapInfo
+			val_sym := c.table.get_type_symbol(info.val_type)
+			if val_sym.info is ast.FunInfo {
+				node.return_type = val_sym.info.decl.return_type
+				return
+			}
+		}
+		found = true
+	}
 	if !found {
 		c.error('unknown function: $node.name')
 	}
@@ -183,8 +206,8 @@ fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 }
 
 fn (mut c Checker) method_call(mut node ast.CallExpr) {
-	node.receiver_type = c.expr(mut node.receiver)
-	rec_sym := c.table.get_type_symbol(node.receiver_type)
+	node.left_type = c.expr(mut node.left)
+	rec_sym := c.table.get_type_symbol(node.left_type)
 	if m := c.table.get_method(rec_sym, node.name) {
 		node.return_type = m.return_type
 	} else {
@@ -192,7 +215,7 @@ fn (mut c Checker) method_call(mut node ast.CallExpr) {
 	}
 	return_sym := c.table.get_type_symbol(node.return_type)
 	if rec_sym.kind == .array && return_sym.name == 'array' {
-		node.return_type = node.receiver_type
+		node.return_type = node.left_type
 	}
 }
 
@@ -228,6 +251,10 @@ fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
 		}
 
 		return gobj.typ
+	}
+	if node.name in c.table.fns {
+		idx := c.table.find_or_register_fun_type(c.table.fns[node.name])
+		return ast.new_type(idx)
 	}
 	return ast.void_type
 }
@@ -305,6 +332,7 @@ fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
 				}
 			}
 		}
+		ast.FunInfo {}
 		ast.MapInfo {}
 		ast.OtherInfo {}
 	}

@@ -19,6 +19,7 @@ pub type Stmt = AssertStmt
 	| PackageDecl
 	| Return
 	| StructDecl
+	| TypeDecl
 pub type Expr = ArrayInit
 	| BoolLiteral
 	| CallExpr
@@ -147,6 +148,11 @@ pub:
 	typ  Type
 }
 
+pub struct TypeDecl {
+	name        string
+	parent_type Type
+}
+
 pub struct ArrayInit {
 pub mut:
 	exprs     []Expr
@@ -167,11 +173,11 @@ pub:
 	lang      Language
 	is_method bool
 pub mut:
-	name          string
-	args          []CallArg
-	return_type   Type
-	receiver      Expr
-	receiver_type Type
+	name        string
+	args        []CallArg
+	return_type Type
+	left        Expr // receiver or IndexExpr
+	left_type   Type
 }
 
 pub struct CallArg {
