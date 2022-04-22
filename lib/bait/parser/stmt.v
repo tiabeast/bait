@@ -273,9 +273,8 @@ fn (mut p Parser) type_decl() ast.TypeDecl {
 	mut typ := ast.void_type
 	if p.tok.kind == .key_fun {
 		typ = p.parse_fun_type(name)
-	}else {
-
-	typ = p.parse_type()
+	} else {
+		typ = p.parse_type()
 	}
 	return ast.TypeDecl{
 		name: name

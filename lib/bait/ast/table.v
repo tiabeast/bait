@@ -88,7 +88,7 @@ pub fn (mut t Table) find_or_register_fun_type(f FunDecl) int {
 	name := if f.name.len == 0 {
 		'anon_fun_' + t.fun_type_signature(f)
 	} else {
-		'fun_${f.name}_'+t.fun_type_signature(f)
+		'fun_' + t.fun_type_signature(f)
 	}
 	existing_idx := t.type_idxs[name]
 	if existing_idx > 0 && t.type_symbols[existing_idx].kind != .placeholder {
@@ -105,14 +105,14 @@ pub fn (mut t Table) find_or_register_fun_type(f FunDecl) int {
 
 fn (t &Table) fun_type_signature(f FunDecl) string {
 	mut s := ''
-	for p in f.params{
+	for p in f.params {
 		sym := t.get_type_symbol(p.typ)
 		s += sym.name
 		s += '_'
 	}
-	rsym:=t.get_type_symbol(f.return_type)
-	s+='_'
-	s+=rsym.name
+	rsym := t.get_type_symbol(f.return_type)
+	s += '_'
+	s += rsym.name
 	return s
 }
 

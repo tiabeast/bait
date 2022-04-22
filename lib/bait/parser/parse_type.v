@@ -65,8 +65,7 @@ fn (mut p Parser) parse_fun_type(name string) ast.Type {
 	p.check(.rpar)
 	mut return_type := ast.void_type
 	if p.tok.pos.line_nr == p.prev_tok.pos.line_nr {
-
-	return_type = p.parse_type()
+		return_type = p.parse_type()
 	}
 	node := ast.FunDecl{
 		name: name

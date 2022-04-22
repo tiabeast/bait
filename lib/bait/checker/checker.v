@@ -326,7 +326,7 @@ fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
 				}
 			}
 		}
-		ast.FunInfo{}
+		ast.FunInfo {}
 		ast.MapInfo {}
 		ast.OtherInfo {}
 	}

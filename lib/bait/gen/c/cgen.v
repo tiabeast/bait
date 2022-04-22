@@ -129,10 +129,10 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 			ast.ArrayInfo {
 				g.type_defs.writeln('typedef array $cname;')
 			}
-			ast.FunInfo{
+			ast.FunInfo {
 				f := (tsym.info as ast.FunInfo).decl
 				return_str := g.typ(f.return_type)
-				g.type_defs.writeln('typedef $return_str ${cname}();')
+				g.type_defs.writeln('typedef $return_str (*$cname) ();')
 			}
 			ast.MapInfo {
 				g.type_defs.writeln('typedef map $cname;')
@@ -205,7 +205,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.PackageDecl { g.package_decl(node) }
 		ast.Return { g.return_stmt(node) }
 		ast.StructDecl {} // handled by write_types()
-		ast.TypeDecl { } // handled by write_types()
+		ast.TypeDecl {} // handled by write_types()
 	}
 	if node is ast.ExprStmt && !g.empty_line {
 		g.writeln(';')
@@ -444,6 +444,9 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 		} else {
 			name = c_name('${sym.name}_$name')
 		}
+	}
+	if node.left is ast.IndexExpr {
+		g.expr(node.left)
 	}
 	g.write('${name}(')
 	if node.is_method {
@@ -695,8 +698,8 @@ fn (mut g Gen) writeln(s string) {
 
 fn c_name(n string) string {
 	name := n.replace('.', '__').replace('[]', 'Array_')
-	if n.starts_with('map[') {
-		return n.replace_each(['[', '_', ']', '_'])
+	if name.starts_with('map[') {
+		return name.replace_each(['[', '_', ']', '_'])
 	}
 	if name in c.c_reserved {
 		return 'bait_$name'
