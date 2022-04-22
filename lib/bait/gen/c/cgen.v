@@ -437,11 +437,13 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 	}
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.left_type)
-		if sym.kind == .array && name == 'slice' {
-			name = c_name('array_$name')
-		} else if sym.kind == .array && name == 'push' {
+		if sym.kind == .array && name == 'push' {
 			g.gen_array_push(node, sym)
 			return
+		} else if sym.kind == .array && name == 'slice' {
+			name = c_name('array_$name')
+		} else if sym.kind == .map {
+			name = c_name('map_$name')
 		} else {
 			name = c_name('${sym.name}_$name')
 		}

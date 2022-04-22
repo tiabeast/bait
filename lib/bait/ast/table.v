@@ -76,6 +76,7 @@ pub fn (mut t Table) find_or_register_map(key_type Type, val_type Type) int {
 	map_type_sym := TypeSymbol{
 		kind: .map
 		name: name
+		parent_idx: int(TypeIdx.map_idx)
 		info: MapInfo{
 			key_type: key_type
 			val_type: val_type

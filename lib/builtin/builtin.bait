@@ -30,3 +30,10 @@ fun calloc(n i32) &u8 {
 fun malloc(n i32) &u8 {
 	return C.malloc(n)
 }
+
+fun (b bool) str() string {
+	if b {
+		return 'true'
+	}
+	return 'false'
+}

@@ -83,6 +83,18 @@ fun (m &map) grow() {
 	}
 }
 
+fun (m &map) has_key(key string) bool{
+	idx := calc_hash(key, m.key_vals.len)
+	el := m.key_vals[idx]
+	for el.key != key {
+		if el.key == '' {
+			return false
+		}
+		el = m.key_vals[el.next]
+	}
+	return true
+}
+
 fun calc_hash(s string, size i32) i32 {
 	hash := 17
 	for i:=0; i<s.len; i+=1{
