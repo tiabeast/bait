@@ -444,8 +444,7 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 		} else {
 			name = c_name('${sym.name}_$name')
 		}
-	}
-	if node.left is ast.IndexExpr {
+	} else if node.left is ast.IndexExpr {
 		g.expr(node.left)
 	}
 	g.write('${name}(')
