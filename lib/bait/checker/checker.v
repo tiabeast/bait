@@ -86,6 +86,12 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 		node.left_type = typ
 		if mut node.left is ast.Ident {
 			node.left.scope.update_type(node.left.name, typ)
+			if node.right is ast.IndexExpr {
+				rsym := c.table.get_type_symbol(typ)
+				if rsym.kind == .function {
+					c.table.fns[node.left.name] = (rsym.info as ast.FunInfo).decl
+				}
+			}
 		}
 	} else {
 		c.expr(mut node.left)
