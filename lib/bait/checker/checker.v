@@ -180,6 +180,19 @@ fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 			node.name = full_name
 		}
 	}
+	if !found && node.left is ast.IndexExpr {
+		c.expr(mut node.left)
+		sym := c.table.get_type_symbol(node.left_type)
+		if sym.kind == .map {
+			info := sym.info as ast.MapInfo
+			val_sym := c.table.get_type_symbol(info.val_type)
+			if val_sym.info is ast.FunInfo {
+				node.return_type = val_sym.info.decl.return_type
+				return
+			}
+		}
+		found = true
+	}
 	if !found {
 		c.error('unknown function: $node.name')
 	}
@@ -233,6 +246,10 @@ fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
 
 		return gobj.typ
 	}
+	if node.name in c.table.fns {
+		idx := c.table.find_or_register_fun_type(c.table.fns[node.name])
+		return ast.new_type(idx)
+	}
 	return ast.void_type
 }
 
@@ -278,9 +295,6 @@ fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
 	}
 	for mut v in node.vals {
 		node.val_type = c.expr(mut v)
-	}
-	if node.val_type == ast.void_type {
-		node.val_type = node.val_type.set_nr_amp(1)
 	}
 	idx := c.table.find_or_register_map(node.key_type, node.val_type)
 	node.typ = ast.new_type(idx)

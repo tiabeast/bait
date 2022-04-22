@@ -85,9 +85,10 @@ pub fn (mut t Table) find_or_register_map(key_type Type, val_type Type) int {
 }
 
 pub fn (mut t Table) find_or_register_fun_type(f FunDecl) int {
-	mut name := f.name
-	if name.len == 0 {
-		name = 'anon_fn_' + t.fun_type_signature(f)
+	name := if f.name.len == 0 {
+		'anon_fun_' + t.fun_type_signature(f)
+	} else {
+		'fun_${f.name}_'+t.fun_type_signature(f)
 	}
 	existing_idx := t.type_idxs[name]
 	if existing_idx > 0 && t.type_symbols[existing_idx].kind != .placeholder {

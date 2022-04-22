@@ -62,6 +62,15 @@ fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 			left = p.infix_expr(left)
 		} else if p.tok.kind == .lbr {
 			left = p.index_expr(left)
+			if p.tok.kind == .lpar && p.tok.pos.line_nr == p.prev_tok.pos.line_nr {
+				p.next()
+				args := p.call_args()
+				p.check(.rpar)
+				return ast.CallExpr{
+					args: args
+					left: left
+				}
+			}
 		} else {
 			return left
 		}
