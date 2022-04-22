@@ -65,6 +65,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
 		ast.MapInit { return c.map_init(mut node) }
+		ast.ParExpr { return c.expr(mut node.expr) }
 		ast.PrefixExpr { return c.prefix_expr(mut node) }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
 		ast.StringLiteral { return ast.string_type }

@@ -33,6 +33,7 @@ pub type Expr = ArrayInit
 	| InfixExpr
 	| IntegerLiteral
 	| MapInit
+	| ParExpr
 	| PrefixExpr
 	| SelectorExpr
 	| StringLiteral
@@ -262,6 +263,11 @@ pub mut:
 	val_type Type
 	keys     []Expr
 	vals     []Expr
+}
+
+pub struct ParExpr {
+pub mut:
+	expr Expr
 }
 
 pub struct PrefixExpr {

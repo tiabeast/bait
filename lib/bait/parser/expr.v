@@ -20,6 +20,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.lcur {
 			node = p.map_init()
 		}
+		.lpar {
+			node = p.par_expr()
+		}
 		.minus {
 			if p.peek_tok.kind == .number {
 				node = p.number_literal()
@@ -332,6 +335,15 @@ fn (mut p Parser) number_literal() ast.Expr {
 	}
 	return ast.IntegerLiteral{
 		val: val
+	}
+}
+
+fn (mut p Parser) par_expr() ast.ParExpr {
+	p.next()
+	e := p.expr(0)
+	p.check(.rpar)
+	return ast.ParExpr{
+		expr: e
 	}
 }
 
