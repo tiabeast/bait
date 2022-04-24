@@ -1,0 +1,40 @@
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
+// Use of this code is governed by an MIT License (see LICENSE.md).
+package strconv
+
+fun parse_i8(s string) i8 {
+	return i8(parse_i64(s))
+}
+
+fun parse_i16(s string) i16 {
+	return i16(parse_i64(s))
+}
+
+fun parse_i32(s string) i32 {
+	return i32(parse_i64(s))
+}
+
+fun parse_i64(s string) i64 {
+	i := 0
+	is_neg := false
+	if s[0] == `-` {
+		is_neg = true
+		i += 1
+	}
+	val := 0
+	for i < s.len{
+		val *= 10
+		val += digit_value(s[i])
+		i+=1
+	}
+	if is_neg {
+		val = -val
+	}
+	return val
+}
+
+fun digit_value(c u8)  i32 {
+	cc := i32(c)
+	return cc - i32(`0`)
+}
