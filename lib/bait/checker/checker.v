@@ -10,7 +10,9 @@ pub mut:
 	table  &ast.Table
 	errors []string
 mut:
-	pkg_name string
+	pkg_name      string
+	expected_type ast.Type
+	cur_fun       ast.FunDecl
 }
 
 pub fn (mut c Checker) check_files(files []&ast.File) {
@@ -59,6 +61,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.CallExpr { return c.call_expr(mut node) }
 		ast.CastExpr { return c.cast_expr(mut node) }
 		ast.CharLiteral { return ast.u8_type }
+		ast.EnumVal { return c.enum_val(mut node) }
 		ast.FloatLiteral { return ast.f32_type }
 		ast.Ident { return c.ident(mut node) }
 		ast.IfExpr { return c.if_expr(mut node) }
@@ -96,7 +99,8 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 			}
 		}
 	} else {
-		c.expr(mut node.left)
+		ltype := c.expr(mut node.left)
+		c.expected_type = ltype
 		c.expr(mut node.right)
 	}
 }
@@ -123,6 +127,7 @@ fn (mut c Checker) for_classic_stmt(mut node ast.ForClassicLoop) {
 }
 
 fn (mut c Checker) fun_decl(mut node ast.FunDecl) {
+	c.cur_fun = node
 	c.stmts(mut node.stmts)
 }
 
@@ -142,6 +147,7 @@ fn (mut c Checker) package_decl(node ast.PackageDecl) {
 
 fn (mut c Checker) return_stmt(mut node ast.Return) {
 	if node.expr !is ast.EmptyExpr {
+		c.expected_type = c.cur_fun.return_type
 		c.expr(mut node.expr)
 	}
 }
@@ -235,6 +241,17 @@ fn (mut c Checker) cast_expr(mut node ast.CastExpr) ast.Type {
 	return node.target_type
 }
 
+fn (mut c Checker) enum_val(mut node ast.EnumVal) ast.Type {
+	type_idx := if node.enum_name.len == 0 {
+		c.expected_type.idx()
+	} else {
+		c.table.type_idxs[node.enum_name]
+	}
+	typ := ast.new_type(type_idx)
+	node.typ = typ
+	return node.typ
+}
+
 fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
 	if node.lang != .bait {
 		return ast.void_type
@@ -290,6 +307,7 @@ fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 
 fn (mut c Checker) infix_expr(mut node ast.InfixExpr) ast.Type {
 	node.left_type = c.expr(mut node.left)
+	c.expected_type = node.left_type
 	node.right_type = c.expr(mut node.right)
 	return node.left_type
 }

@@ -80,8 +80,8 @@ fn (mut p Parser) const_decl() ast.ConstDecl {
 
 fn (mut p Parser) enum_decl() ast.EnumDecl {
 	p.next()
-	name := p.check_name()
-	// TODO pkg name
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
 	p.check(.lcur)
 	mut field_names := []string{}
 	for p.tok.kind != .rcur {
@@ -247,7 +247,7 @@ fn (mut p Parser) package_decl() ast.PackageDecl {
 	name := p.check_name()
 	full_name := if name == 'main' {
 		name
-	}else{
+	} else {
 		p.path.all_after('lib/').all_before_last('/').replace('/', '.')
 	}
 	p.pkg_name = name
@@ -270,7 +270,8 @@ fn (mut p Parser) return_stmt() ast.Return {
 
 fn (mut p Parser) struct_decl() ast.StructDecl {
 	p.check(.key_struct)
-	name := p.check_name()
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
 	p.check(.lcur)
 	mut fields := []ast.StructField{}
 	for p.tok.kind != .rcur {

@@ -27,6 +27,7 @@ pub type Expr = ArrayInit
 	| CastExpr
 	| CharLiteral
 	| EmptyExpr
+	| EnumVal
 	| FloatLiteral
 	| Ident
 	| IfExpr
@@ -137,7 +138,7 @@ pub:
 
 pub struct PackageDecl {
 pub:
-	name string
+	name      string
 	full_name string
 }
 
@@ -204,6 +205,14 @@ pub mut:
 pub struct CharLiteral {
 pub:
 	val string
+}
+
+pub struct EnumVal {
+pub:
+	enum_name string
+	val       string
+pub mut:
+	typ Type
 }
 
 pub struct FloatLiteral {
