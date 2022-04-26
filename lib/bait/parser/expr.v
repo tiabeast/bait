@@ -14,6 +14,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.char {
 			node = p.char_literal()
 		}
+		.dot {
+			node = p.enum_val(false)
+		}
 		.lbr {
 			node = p.array_init()
 		}
@@ -200,6 +203,20 @@ fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	}
 }
 
+fn (mut p Parser) enum_val(has_name bool) ast.EnumVal {
+	mut enum_name := ''
+	if has_name {
+		enum_name = p.check_name()
+		enum_name = p.prepend_pkg(enum_name)
+	}
+	p.check(.dot)
+	val := p.check_name()
+	return ast.EnumVal{
+		enum_name: enum_name
+		val: val
+	}
+}
+
 fn (mut p Parser) ident(lang ast.Language) ast.Ident {
 	mut name := p.check_name()
 	if p.expr_pkg.len > 0 {
@@ -312,6 +329,8 @@ fn (mut p Parser) name_expr() ast.Expr {
 		return p.call_expr(lang)
 	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
 		return p.struct_init()
+	} else if p.peek_tok.kind == .dot && p.tok.lit[0].is_capital() && !p.tok.lit.is_upper() {
+		return p.enum_val(true)
 	} else if p.tok.lit == 'map' && p.peek_tok.kind == .lbr {
 		return p.map_type_init()
 	}

@@ -138,8 +138,8 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 				g.type_defs.writeln('typedef map $cname;')
 			}
 			ast.StructInfo {
-				g.type_defs.writeln('typedef struct $tsym.name $tsym.name;')
-				g.type_impls.writeln('struct $tsym.name {')
+				g.type_defs.writeln('typedef struct $cname $cname;')
+				g.type_impls.writeln('struct $cname {')
 				for field in tsym.info.fields {
 					type_name := g.typ(field.typ)
 					field_name := c_name(field.name)
@@ -195,6 +195,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.AssertStmt { g.assert_stmt(node) }
 		ast.AssignStmt { g.assign_stmt(node) }
 		ast.ConstDecl { g.const_decl(node) }
+		ast.EnumDecl { g.enum_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.ForLoop { g.for_loop(node) }
 		ast.ForClassicLoop { g.for_classic_loop(node) }
@@ -220,6 +221,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.CallExpr { g.call_expr(node) }
 		ast.CastExpr { g.cast_expr(node) }
 		ast.CharLiteral { g.char_literal(node) }
+		ast.EnumVal { g.enum_val(node) }
 		ast.FloatLiteral { g.float_literal(node) }
 		ast.Ident { g.ident(node) }
 		ast.IfExpr { g.if_expr(node) }
@@ -315,6 +317,16 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 			g.type_impls.writeln('#define CONST_$name $val')
 		}
 	}
+}
+
+fn (mut g Gen) enum_decl(node ast.EnumDecl) {
+	name := c_name(node.name)
+	g.type_defs.writeln('typedef enum {')
+	for fname in node.field_names {
+		val_name := c_name('${name}.$fname')
+		g.type_defs.writeln('\t$val_name,')
+	}
+	g.type_defs.writeln('} $name;\n')
 }
 
 fn (mut g Gen) for_loop(node ast.ForLoop) {
@@ -490,6 +502,11 @@ fn (mut g Gen) cast_expr(node ast.CastExpr) {
 
 fn (mut g Gen) char_literal(node ast.CharLiteral) {
 	g.write("'$node.val'")
+}
+
+fn (mut g Gen) enum_val(node ast.EnumVal) {
+	typ := g.typ(node.typ)
+	g.write('${typ}__$node.val')
 }
 
 fn (mut g Gen) float_literal(node ast.FloatLiteral) {

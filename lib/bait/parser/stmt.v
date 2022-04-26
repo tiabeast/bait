@@ -19,6 +19,7 @@ fn (mut p Parser) stmt() ast.Stmt {
 fn (mut p Parser) top_level_stmt() ast.Stmt {
 	match p.tok.kind {
 		.key_const { return p.const_decl() }
+		.key_enum { return p.enum_decl() }
 		.key_fun { return p.fun_decl() }
 		.key_global { return p.global_decl() }
 		.key_struct { return p.struct_decl() }
@@ -74,6 +75,26 @@ fn (mut p Parser) const_decl() ast.ConstDecl {
 	return ast.ConstDecl{
 		name: name
 		expr: expr
+	}
+}
+
+fn (mut p Parser) enum_decl() ast.EnumDecl {
+	p.next()
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
+	p.check(.lcur)
+	mut field_names := []string{}
+	for p.tok.kind != .rcur {
+		field_names << p.check_name()
+	}
+	p.check(.rcur)
+	p.table.register_type_symbol(ast.TypeSymbol{
+		kind: .enum_
+		name: name
+	})
+	return ast.EnumDecl{
+		name: name
+		field_names: field_names
 	}
 }
 
@@ -224,9 +245,15 @@ fn (mut p Parser) loop_control_stmt() ast.LoopControlStmt {
 fn (mut p Parser) package_decl() ast.PackageDecl {
 	p.check(.key_package)
 	name := p.check_name()
+	full_name := if name == 'main' {
+		name
+	} else {
+		p.path.all_after('lib/').all_before_last('/').replace('/', '.')
+	}
 	p.pkg_name = name
 	return ast.PackageDecl{
 		name: name
+		full_name: full_name
 	}
 }
 
@@ -243,7 +270,8 @@ fn (mut p Parser) return_stmt() ast.Return {
 
 fn (mut p Parser) struct_decl() ast.StructDecl {
 	p.check(.key_struct)
-	name := p.check_name()
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
 	p.check(.lcur)
 	mut fields := []ast.StructField{}
 	for p.tok.kind != .rcur {

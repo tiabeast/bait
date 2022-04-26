@@ -86,11 +86,11 @@ fn compile(path string, prefs &pref.Preferences) int {
 	}
 	mut deps := map[string][]string{}
 	for f in files {
-		if f.pkg.name != 'builtin' {
-			deps[f.pkg.name] << 'builtin'
+		if f.pkg.full_name != 'builtin' {
+			deps[f.pkg.full_name] << 'builtin'
 		}
 		for imp in f.imports {
-			deps[f.pkg.name] << imp.name
+			deps[f.pkg.full_name] << imp.name
 		}
 	}
 	mut ordered := []string{}
@@ -98,7 +98,7 @@ fn compile(path string, prefs &pref.Preferences) int {
 	mut reordered_files := []&ast.File{}
 	for pkg in ordered {
 		for f in files {
-			if pkg == f.pkg.name {
+			if pkg == f.pkg.full_name {
 				reordered_files << f
 			}
 		}

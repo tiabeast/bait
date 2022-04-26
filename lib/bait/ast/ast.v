@@ -9,6 +9,7 @@ pub type Stmt = AssertStmt
 	| AssignStmt
 	| ConstDecl
 	| EmptyStmt
+	| EnumDecl
 	| ExprStmt
 	| ForClassicLoop
 	| ForLoop
@@ -26,6 +27,7 @@ pub type Expr = ArrayInit
 	| CastExpr
 	| CharLiteral
 	| EmptyExpr
+	| EnumVal
 	| FloatLiteral
 	| Ident
 	| IfExpr
@@ -69,6 +71,12 @@ pub mut:
 	name string
 	expr Expr
 	typ  Type
+}
+
+pub struct EnumDecl {
+pub:
+	name        string
+	field_names []string
 }
 
 pub struct ExprStmt {
@@ -130,7 +138,8 @@ pub:
 
 pub struct PackageDecl {
 pub:
-	name string
+	name      string
+	full_name string
 }
 
 pub struct Return {
@@ -196,6 +205,14 @@ pub mut:
 pub struct CharLiteral {
 pub:
 	val string
+}
+
+pub struct EnumVal {
+pub:
+	enum_name string
+	val       string
+pub mut:
+	typ Type
 }
 
 pub struct FloatLiteral {
