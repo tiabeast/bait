@@ -36,6 +36,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.AssertStmt { c.assert_stmt(mut node) }
 		ast.AssignStmt { c.assign_stmt(mut node) }
 		ast.ConstDecl { c.const_decl(mut node) }
+		ast.EnumDecl { c.enum_decl(node) }
 		ast.ExprStmt { c.expr(mut node.expr) }
 		ast.ForLoop { c.for_stmt(mut node) }
 		ast.ForClassicLoop { c.for_classic_stmt(mut node) }
@@ -104,6 +105,9 @@ fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 	typ := c.expr(mut node.expr)
 	c.table.global_scope.update_type(node.name, typ)
 	node.typ = typ
+}
+
+fn (mut c Checker) enum_decl(node ast.EnumDecl) {
 }
 
 fn (mut c Checker) for_stmt(mut node ast.ForLoop) {

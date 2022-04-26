@@ -52,6 +52,7 @@ pub enum Kind {
 	key_const
 	key_continue
 	key_else
+	key_enum
 	key_false
 	key_for
 	key_fun
@@ -75,6 +76,7 @@ pub const keywords = {
 	'const':    Kind.key_const
 	'continue': Kind.key_continue
 	'else':     Kind.key_else
+	'enum':     Kind.key_enum
 	'false':    Kind.key_false
 	'for':      Kind.key_for
 	'fun':      Kind.key_fun

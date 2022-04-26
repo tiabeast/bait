@@ -9,6 +9,7 @@ pub type Stmt = AssertStmt
 	| AssignStmt
 	| ConstDecl
 	| EmptyStmt
+	| EnumDecl
 	| ExprStmt
 	| ForClassicLoop
 	| ForLoop
@@ -71,6 +72,12 @@ pub mut:
 	typ  Type
 }
 
+pub struct EnumDecl {
+pub:
+	name        string
+	field_names []string
+}
+
 pub struct ExprStmt {
 pub mut:
 	expr Expr
@@ -131,6 +138,7 @@ pub:
 pub struct PackageDecl {
 pub:
 	name string
+	full_name string
 }
 
 pub struct Return {

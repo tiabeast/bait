@@ -36,6 +36,7 @@ pub enum TypeKind {
 	array
 	struct_
 	map
+	enum_
 	function
 }
 

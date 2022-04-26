@@ -195,6 +195,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.AssertStmt { g.assert_stmt(node) }
 		ast.AssignStmt { g.assign_stmt(node) }
 		ast.ConstDecl { g.const_decl(node) }
+		ast.EnumDecl { g.enum_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.ForLoop { g.for_loop(node) }
 		ast.ForClassicLoop { g.for_classic_loop(node) }
@@ -315,6 +316,16 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 			g.type_impls.writeln('#define CONST_$name $val')
 		}
 	}
+}
+
+fn (mut g Gen) enum_decl(node ast.EnumDecl) {
+	name := c_name(node.name)
+	g.type_defs.writeln('typedef enum {')
+	for fname in node.field_names {
+		val_name := c_name('${name}.$fname')
+		g.type_defs.writeln('\t$val_name,')
+	}
+	g.type_defs.writeln('} $name;\n')
 }
 
 fn (mut g Gen) for_loop(node ast.ForLoop) {
