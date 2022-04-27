@@ -90,7 +90,7 @@ fun (s string) replace(val string, with string) string {
 	if s.len == 0 or val.len == 0 or val.len > s.len {
 		return s
 	}
-	idxs := []int
+	idxs := []i32
 	i := 0
 	for  true {
 		i = s.index_after(val, i)

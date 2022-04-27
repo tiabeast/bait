@@ -107,7 +107,7 @@ enum Precedence {
 const PRECEDENCES = build_precedences()
 
 fun build_precedences() []Precedence {
-	p := []Precedence{len: int(Kind.__end__)}
+	p := []Precedence{len: i32(Kind.__end__)}
 	p[Kind.lbr] = .index
 	p[Kind.dot] = .call
 	p[Kind.key_not] = .prefix

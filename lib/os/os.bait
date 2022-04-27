@@ -67,10 +67,10 @@ fun read_file(path string) string {
 	fp := &void(0)
 	fp = C.fopen(path.str, 'rb')
 	C.fseek(fp, 0, C.SEEK_END)
-	fsize := int(C.ftell(fp))
+	fsize := i32(C.ftell(fp))
 	C.rewind(fp)
 	str := malloc(fsize + 1)
-	nelements := int(C.fread(str, 1, fsize, fp))
+	nelements := i32(C.fread(str, 1, fsize, fp))
 	str[nelements] = 0
 	C.fclose(fp)
 	return str.string_with_len(nelements)

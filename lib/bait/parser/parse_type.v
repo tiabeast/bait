@@ -23,53 +23,28 @@ fn (mut p Parser) parse_type() ast.Type {
 	}
 	mut typ := ast.void_type
 	mut name := p.tok.lit
+	if p.expr_pkg.len > 0 {
+		name = p.expr_pkg + '.' + name
+		p.expr_pkg = ''
+	} else if name !in p.table.type_idxs && !name.contains('.') {
+		name = p.prepend_pkg(name)
+	}
 	p.next()
 	match name {
-		'i8' {
-			typ = ast.i8_type
-		}
-		'i16' {
-			typ = ast.i16_type
-		}
-		'i32' {
-			typ = ast.i32_type
-		}
-		'i64' {
-			typ = ast.i64_type
-		}
-		'u8' {
-			typ = ast.u8_type
-		}
-		'u16' {
-			typ = ast.u16_type
-		}
-		'u32' {
-			typ = ast.u32_type
-		}
-		'u64' {
-			typ = ast.u64_type
-		}
-		'f32' {
-			typ = ast.f32_type
-		}
-		'f64' {
-			typ = ast.f64_type
-		}
-		'bool' {
-			typ = ast.bool_type
-		}
-		'string' {
-			typ = ast.string_type
-		}
-		'map' {
-			typ = p.parse_map_type()
-		}
-		else {
-			if name !in p.table.type_idxs && !name.contains('.') {
-				name = p.prepend_pkg(name)
-			}
-			typ = p.table.placeholder_or_new_type(name)
-		}
+		'i8' { typ = ast.i8_type }
+		'i16' { typ = ast.i16_type }
+		'i32' { typ = ast.i32_type }
+		'i64' { typ = ast.i64_type }
+		'u8' { typ = ast.u8_type }
+		'u16' { typ = ast.u16_type }
+		'u32' { typ = ast.u32_type }
+		'u64' { typ = ast.u64_type }
+		'f32' { typ = ast.f32_type }
+		'f64' { typ = ast.f64_type }
+		'bool' { typ = ast.bool_type }
+		'string' { typ = ast.string_type }
+		'map' { typ = p.parse_map_type() }
+		else { typ = p.table.placeholder_or_new_type(name) }
 	}
 
 	if nr_amp > 0 {

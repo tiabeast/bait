@@ -321,7 +321,7 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 	val := g.expr_string(node.expr)
 
 	match node.expr {
-		ast.CallExpr, ast.MapInit {
+		ast.ArrayInit, ast.CallExpr, ast.MapInit {
 			typ := g.typ(node.typ)
 			g.type_defs.writeln('$typ CONST_$name;')
 			g.global_inits.writeln('\tCONST_$name = $val;')

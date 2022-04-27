@@ -1,10 +1,15 @@
-// This file is part of: bait programming language
-// Copyright (c) 2022 Lukas Neubert
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
-
 package pref
 
 import os
+
+struct Preferences {
+	path     string
+	is_test  bool
+	out_name string
+}
 
 fun bait_exe_path() string {
 	bexe := os.getenv('BAITEXE')
