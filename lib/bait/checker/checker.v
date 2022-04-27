@@ -69,6 +69,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
 		ast.MapInit { return c.map_init(mut node) }
+		ast.MatchExpr { return c.match_expr(mut node) }
 		ast.ParExpr { return c.expr(mut node.expr) }
 		ast.PrefixExpr { return c.prefix_expr(mut node) }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
@@ -328,6 +329,10 @@ fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
 	idx := c.table.find_or_register_map(node.key_type, node.val_type)
 	node.typ = ast.new_type(idx)
 	return node.typ
+}
+
+fn (mut c Checker) match_expr(mut node ast.MatchExpr) ast.Type {
+	return ast.void_type
 }
 
 fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {

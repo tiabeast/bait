@@ -228,6 +228,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.IndexExpr { g.index_expr(node) }
 		ast.InfixExpr { g.infix_expr(node) }
 		ast.MapInit { g.map_init(node) }
+		ast.MatchExpr { g.match_expr(node) }
 		ast.ParExpr { g.par_expr(node) }
 		ast.PrefixExpr { g.prefix_expr(node) }
 		ast.IntegerLiteral { g.integer_literal(node) }
@@ -642,6 +643,10 @@ fn (mut g Gen) map_init(node ast.MapInit) {
 		g.write(',')
 	}
 	g.write('})')
+}
+
+fn (mut g Gen) match_expr(node ast.MatchExpr) {
+	// TODO
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {

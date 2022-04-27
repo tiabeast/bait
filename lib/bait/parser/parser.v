@@ -18,8 +18,7 @@ mut:
 	imports         []ast.Import
 	expr_pkg        string
 	in_test_file    bool
-	inside_for_cond bool
-	inside_if_cond  bool
+	is_expecting_block bool
 	tidx            int
 	prev_tok        token.Token
 	tok             token.Token
