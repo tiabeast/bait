@@ -332,6 +332,14 @@ fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
 }
 
 fn (mut c Checker) match_expr(mut node ast.MatchExpr) ast.Type {
+	c.expr(mut node.cond)
+	for mut b in node.branches {
+		if b.val !is ast.EmptyExpr {
+
+		c.expr(mut b.val)
+		}
+		c.stmts(mut b.stmts)
+	}
 	return ast.void_type
 }
 

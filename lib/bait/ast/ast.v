@@ -284,8 +284,7 @@ pub mut:
 }
 
 pub struct MatchExpr {
-pub:
-	has_else bool
+pub mut:
 	cond     Expr
 	branches []MatchBranch
 }
