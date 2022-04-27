@@ -1,0 +1,12 @@
+// This file is part of: bait.
+// Copyright (c) 2022 Lukas Neubert.
+// Use of this code is governed by an MIT License (see LICENSE.md).
+package token
+
+struct Position {
+	line_nr i32
+}
+
+fun (p Position) str() string {
+	return 'line ' + p.line_nr.str()
+}

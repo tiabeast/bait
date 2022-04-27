@@ -27,8 +27,10 @@ jobs:
         with:
           check-latest: true
       - uses: actions/checkout@v2
-      - name: Build bait
+      - name: Build baitv
         run: v -o bait cmd/main.v
+      - name: Build bait
+        run: ./bait cmd/bait.bait
       - name: Build examples
         run: |
           ./bait examples/hello_world.bait
