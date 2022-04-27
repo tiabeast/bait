@@ -69,6 +69,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.InfixExpr { return c.infix_expr(mut node) }
 		ast.IntegerLiteral { return ast.i32_type }
 		ast.MapInit { return c.map_init(mut node) }
+		ast.MatchExpr { return c.match_expr(mut node) }
 		ast.ParExpr { return c.expr(mut node.expr) }
 		ast.PrefixExpr { return c.prefix_expr(mut node) }
 		ast.SelectorExpr { return c.selector_expr(mut node) }
@@ -147,6 +148,9 @@ fn (mut c Checker) package_decl(node ast.PackageDecl) {
 
 fn (mut c Checker) return_stmt(mut node ast.Return) {
 	if node.expr !is ast.EmptyExpr {
+		if node.expr is ast.MatchExpr {
+			node.needs_tmp_var = true
+		}
 		c.expected_type = c.cur_fun.return_type
 		c.expr(mut node.expr)
 	}
@@ -328,6 +332,24 @@ fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
 	idx := c.table.find_or_register_map(node.key_type, node.val_type)
 	node.typ = ast.new_type(idx)
 	return node.typ
+}
+
+fn (mut c Checker) match_expr(mut node ast.MatchExpr) ast.Type {
+	cond_type := c.expr(mut node.cond)
+	cond_sym := c.table.get_type_symbol(cond_type)
+	if cond_sym.kind == .enum_ {
+		c.expected_type = cond_type
+	}
+	for mut b in node.branches {
+		if b.val !is ast.EmptyExpr {
+			c.expr(mut b.val)
+		}
+		c.stmts(mut b.stmts)
+	}
+	if node.is_expr {
+		return c.expected_type
+	}
+	return ast.void_type
 }
 
 fn (mut c Checker) prefix_expr(mut node ast.PrefixExpr) ast.Type {

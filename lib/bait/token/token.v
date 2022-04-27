@@ -59,6 +59,7 @@ pub enum Kind {
 	key_global
 	key_if
 	key_import
+	key_match
 	key_not
 	key_or
 	key_package
@@ -83,6 +84,7 @@ pub const keywords = {
 	'global':   Kind.key_global
 	'if':       Kind.key_if
 	'import':   Kind.key_import
+	'match':    Kind.key_match
 	'not':      Kind.key_not
 	'or':       Kind.key_or
 	'package':  Kind.key_package

@@ -106,7 +106,7 @@ fn (mut p Parser) expr_stmt() ast.ExprStmt {
 
 fn (mut p Parser) for_stmt() ast.Stmt {
 	p.check(.key_for)
-	p.inside_for_cond = true
+	p.is_expecting_block = true
 	p.open_scope()
 	if p.peek_tok.kind == .decl_assign {
 		init := p.assign_or_expr_stmt()
@@ -114,7 +114,7 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 		cond := p.expr(0)
 		p.check(.semicolon)
 		inc := p.stmt()
-		p.inside_for_cond = false
+		p.is_expecting_block = false
 		stmts := p.parse_block_no_scope()
 		return ast.ForClassicLoop{
 			init: init
@@ -124,7 +124,7 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 		}
 	} else {
 		cond := p.expr(0)
-		p.inside_for_cond = false
+		p.is_expecting_block = false
 		stmts := p.parse_block_no_scope()
 		return ast.ForLoop{
 			cond: cond

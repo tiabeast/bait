@@ -11,19 +11,18 @@ struct Parser {
 	all_tokens []token.Token
 	path       string
 mut:
-	table           &ast.Table
-	scope           &ast.Scope
-	pkg_name        string
-	import_aliases  []string
-	imports         []ast.Import
-	expr_pkg        string
-	in_test_file    bool
-	inside_for_cond bool
-	inside_if_cond  bool
-	tidx            int
-	prev_tok        token.Token
-	tok             token.Token
-	peek_tok        token.Token
+	table              &ast.Table
+	scope              &ast.Scope
+	pkg_name           string
+	import_aliases     []string
+	imports            []ast.Import
+	expr_pkg           string
+	in_test_file       bool
+	is_expecting_block bool
+	tidx               int
+	prev_tok           token.Token
+	tok                token.Token
+	peek_tok           token.Token
 }
 
 pub fn parse_tokens(tokens []token.Token, path string, table &ast.Table) &ast.File {

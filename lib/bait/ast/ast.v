@@ -35,6 +35,7 @@ pub type Expr = ArrayInit
 	| InfixExpr
 	| IntegerLiteral
 	| MapInit
+	| MatchExpr
 	| ParExpr
 	| PrefixExpr
 	| SelectorExpr
@@ -144,7 +145,8 @@ pub:
 
 pub struct Return {
 pub mut:
-	expr Expr
+	needs_tmp_var bool
+	expr          Expr
 }
 
 pub struct StructDecl {
@@ -280,6 +282,19 @@ pub mut:
 	val_type Type
 	keys     []Expr
 	vals     []Expr
+}
+
+pub struct MatchExpr {
+pub mut:
+	is_expr  bool
+	cond     Expr
+	branches []MatchBranch
+}
+
+pub struct MatchBranch {
+pub mut:
+	val   Expr
+	stmts []Stmt
 }
 
 pub struct ParExpr {

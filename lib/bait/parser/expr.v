@@ -45,6 +45,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		.key_if {
 			node = p.if_expr()
 		}
+		.key_match {
+			node = p.match_expr()
+		}
 		.key_not {
 			node = p.prefix_expr()
 		}
@@ -247,9 +250,9 @@ fn (mut p Parser) if_expr() ast.IfExpr {
 			}
 		}
 		p.check(.key_if)
-		p.inside_if_cond = true
+		p.is_expecting_block = true
 		cond := p.expr(0)
-		p.inside_if_cond = false
+		p.is_expecting_block = false
 		stmts := p.parse_block_no_scope()
 		branches << ast.IfBranch{
 			cond: cond
@@ -310,6 +313,37 @@ fn (mut p Parser) map_type_init() ast.MapInit {
 	}
 }
 
+fn (mut p Parser) match_expr() ast.MatchExpr {
+	is_expr := p.prev_tok.kind == .key_return
+	p.next()
+	p.is_expecting_block = true
+	cond := p.expr(0)
+	p.is_expecting_block = false
+	p.check(.lcur)
+	mut branches := []ast.MatchBranch{}
+	for p.tok.kind != .rcur {
+		mut val := ast.empty_expr()
+		p.open_scope()
+		if p.tok.kind == .key_else {
+			p.next()
+		} else {
+			val = p.expr(0)
+		}
+		stmts := p.parse_block_no_scope()
+		p.close_scope()
+		branches << ast.MatchBranch{
+			val: val
+			stmts: stmts
+		}
+	}
+	p.check(.rcur)
+	return ast.MatchExpr{
+		is_expr: is_expr
+		cond: cond
+		branches: branches
+	}
+}
+
 fn (mut p Parser) name_expr() ast.Expr {
 	mut lang := ast.Language.bait
 	if p.tok.lit == 'C' {
@@ -327,7 +361,7 @@ fn (mut p Parser) name_expr() ast.Expr {
 			return p.cast_expr()
 		}
 		return p.call_expr(lang)
-	} else if p.peek_tok.kind == .lcur && !p.inside_for_cond && !p.inside_if_cond {
+	} else if p.peek_tok.kind == .lcur && !p.is_expecting_block {
 		return p.struct_init()
 	} else if p.peek_tok.kind == .dot && p.tok.lit[0].is_capital() && !p.tok.lit.is_upper() {
 		return p.enum_val(true)
