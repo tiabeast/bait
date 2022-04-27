@@ -245,10 +245,13 @@ fn (mut p Parser) loop_control_stmt() ast.LoopControlStmt {
 fn (mut p Parser) package_decl() ast.PackageDecl {
 	p.check(.key_package)
 	name := p.check_name()
-	full_name := if name == 'main' {
-		name
-	} else {
-		p.path.all_after('lib/').all_before_last('/').replace('/', '.')
+	mut full_name := name
+	if full_name != 'main' {
+		// TODO add bait.mod file and use it as base if not a lib module
+		rel_path := p.path.all_after('lib/')
+		if rel_path.len < p.path.len {
+			full_name = rel_path.all_before_last('/').replace('/', '.')
+		}
 	}
 	p.pkg_name = name
 	return ast.PackageDecl{
