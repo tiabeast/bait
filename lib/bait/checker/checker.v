@@ -148,6 +148,9 @@ fn (mut c Checker) package_decl(node ast.PackageDecl) {
 
 fn (mut c Checker) return_stmt(mut node ast.Return) {
 	if node.expr !is ast.EmptyExpr {
+		if node.expr is ast.MatchExpr {
+			node.needs_tmp_var = true
+		}
 		c.expected_type = c.cur_fun.return_type
 		c.expr(mut node.expr)
 	}
@@ -332,13 +335,19 @@ fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
 }
 
 fn (mut c Checker) match_expr(mut node ast.MatchExpr) ast.Type {
-	c.expr(mut node.cond)
+	cond_type := c.expr(mut node.cond)
+	cond_sym := c.table.get_type_symbol(cond_type)
+	if cond_sym.kind == .enum_ {
+		c.expected_type = cond_type
+	}
 	for mut b in node.branches {
 		if b.val !is ast.EmptyExpr {
-
-		c.expr(mut b.val)
+			c.expr(mut b.val)
 		}
 		c.stmts(mut b.stmts)
+	}
+	if node.is_expr {
+		return c.expected_type
 	}
 	return ast.void_type
 }

@@ -145,7 +145,8 @@ pub:
 
 pub struct Return {
 pub mut:
-	expr Expr
+	needs_tmp_var bool
+	expr          Expr
 }
 
 pub struct StructDecl {
@@ -285,6 +286,7 @@ pub mut:
 
 pub struct MatchExpr {
 pub mut:
+	is_expr  bool
 	cond     Expr
 	branches []MatchBranch
 }

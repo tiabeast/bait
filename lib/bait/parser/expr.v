@@ -314,6 +314,7 @@ fn (mut p Parser) map_type_init() ast.MapInit {
 }
 
 fn (mut p Parser) match_expr() ast.MatchExpr {
+	is_expr := p.prev_tok.kind == .key_return
 	p.next()
 	p.is_expecting_block = true
 	cond := p.expr(0)
@@ -337,6 +338,7 @@ fn (mut p Parser) match_expr() ast.MatchExpr {
 	}
 	p.check(.rcur)
 	return ast.MatchExpr{
+		is_expr: is_expr
 		cond: cond
 		branches: branches
 	}

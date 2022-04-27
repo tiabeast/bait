@@ -19,6 +19,9 @@ mut:
 	lang                    ast.Language = .bait
 	indent                  int
 	empty_line              bool
+	cur_fun                 ast.FunDecl
+	use_tmp_var             bool
+	tmp_count               int
 	inside_for_classic_loop bool
 	is_assign_left_side     bool
 	is_array_map_set        bool
@@ -179,6 +182,15 @@ fn (mut g Gen) c_main() {
 	g.writeln('\tmain__main();')
 	g.writeln('\treturn 0;')
 	g.writeln('}')
+}
+
+fn (mut g Gen) new_tmp_var() string {
+	g.tmp_count++
+	return '_t$g.tmp_count'
+}
+
+fn (mut g Gen) cur_tmp_var() string {
+	return '_t$g.tmp_count'
 }
 
 fn (mut g Gen) stmts(stmts []ast.Stmt) {
@@ -353,6 +365,7 @@ fn (mut g Gen) for_classic_loop(node ast.ForClassicLoop) {
 }
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {
+	g.cur_fun = node
 	mut name := c_name(node.name)
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.params[0].typ)
@@ -400,6 +413,17 @@ fn (mut g Gen) package_decl(node ast.PackageDecl) {
 }
 
 fn (mut g Gen) return_stmt(node ast.Return) {
+	if node.needs_tmp_var {
+		g.use_tmp_var = true
+		typ := g.typ(g.cur_fun.return_type)
+		var := g.new_tmp_var()
+		g.writeln('$typ $var;')
+		g.expr(node.expr)
+		g.writeln(';')
+		g.writeln('return $var;')
+		g.use_tmp_var = false
+		return
+	}
 	g.write('return')
 	if node.expr !is ast.EmptyExpr {
 		g.write(' ')
@@ -658,6 +682,10 @@ fn (mut g Gen) match_expr(node ast.MatchExpr) {
 			g.expr(b.val)
 		}
 		g.writeln(': {')
+		if g.use_tmp_var {
+			var := g.cur_tmp_var()
+			g.write('\t$var = ')
+		}
 		g.stmts(b.stmts)
 		g.writeln('\tbreak;')
 		g.writeln('}')
