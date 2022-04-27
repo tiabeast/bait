@@ -646,7 +646,24 @@ fn (mut g Gen) map_init(node ast.MapInit) {
 }
 
 fn (mut g Gen) match_expr(node ast.MatchExpr) {
-	// TODO
+	g.write('switch (')
+	g.expr(node.cond)
+	g.writeln(') {')
+	g.indent++
+	for b in node.branches {
+		if b.val is ast.EmptyExpr {
+			g.write('default')
+		} else {
+			g.write('case ')
+			g.expr(b.val)
+		}
+		g.writeln(': {')
+		g.stmts(b.stmts)
+		g.writeln('\tbreak;')
+		g.writeln('}')
+	}
+	g.indent--
+	g.write('}')
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
