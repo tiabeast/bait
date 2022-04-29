@@ -75,3 +75,9 @@ fun read_file(path string) string {
 	C.fclose(fp)
 	return str.string_with_len(nelements)
 }
+
+fun read_lines(path string) []string {
+	s := read_file(path)
+	res := s.split('\n')
+	return s
+}

@@ -80,3 +80,7 @@ fun (a array) slice(start i32, end i32) array {
 		cap: len
 	}
 }
+
+fun (a array) last() &void {
+	return a.data + (a.len - 1) * a.elem_size
+}

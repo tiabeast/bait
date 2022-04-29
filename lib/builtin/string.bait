@@ -139,6 +139,18 @@ fun(s string)contains(substr string)bool{
 	return false
 }
 
+fun(s string) starts_with(substr string)bool{
+	if substr.len > s.len or substr.len == 0 {
+		return false
+	}
+	for i := 0; i < substr.len; i+=1{
+		if s.str[i] != substr.str[i]{
+			return false
+		}
+	}
+	return true
+}
+
 fun (s string) index(substr string) i32 {
 	return s.index_after(substr, 0)
 }
