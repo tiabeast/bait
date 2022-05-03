@@ -286,9 +286,10 @@ pub mut:
 
 pub struct MatchExpr {
 pub mut:
-	is_expr  bool
-	cond     Expr
-	branches []MatchBranch
+	is_expr   bool
+	cond      Expr
+	cond_type Type
+	branches  []MatchBranch
 }
 
 pub struct MatchBranch {

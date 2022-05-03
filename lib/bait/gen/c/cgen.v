@@ -670,6 +670,15 @@ fn (mut g Gen) map_init(node ast.MapInit) {
 }
 
 fn (mut g Gen) match_expr(node ast.MatchExpr) {
+	sym := g.table.get_type_symbol(node.cond_type)
+	if sym.kind == .enum_ {
+		g.match_expr_switch(node)
+	} else {
+		g.match_expr_ifelse(node)
+	}
+}
+
+fn (mut g Gen) match_expr_switch(node ast.MatchExpr) {
 	g.write('switch (')
 	g.expr(node.cond)
 	g.writeln(') {')
@@ -692,6 +701,28 @@ fn (mut g Gen) match_expr(node ast.MatchExpr) {
 	}
 	g.indent--
 	g.write('}')
+}
+
+fn (mut g Gen) match_expr_ifelse(node ast.MatchExpr) {
+	sym := g.table.get_type_symbol(node.cond_type)
+	for i, b in node.branches {
+		if i > 0 {
+			g.write('else ')
+		}
+		if b.val !is ast.EmptyExpr {
+			g.write('if (')
+			if sym.kind == .string {
+				g.write('string_eq(')
+				g.expr(node.cond)
+				g.write(', ')
+				g.expr(b.val)
+				g.write('))')
+			}
+		}
+		g.writeln(' {')
+		g.stmts(b.stmts)
+		g.write('}')
+	}
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {

@@ -336,6 +336,7 @@ fn (mut c Checker) map_init(mut node ast.MapInit) ast.Type {
 
 fn (mut c Checker) match_expr(mut node ast.MatchExpr) ast.Type {
 	cond_type := c.expr(mut node.cond)
+	node.cond_type = cond_type
 	cond_sym := c.table.get_type_symbol(cond_type)
 	if cond_sym.kind == .enum_ {
 		c.expected_type = cond_type

@@ -6,9 +6,41 @@ package pref
 import os
 
 struct Preferences {
+	command string
 	path     string
 	is_test  bool
 	out_name string
+}
+
+fun parse_args(args []string) Preferences {
+	// TODO struct pointer inits &pref.Preferences{}
+	p := Preferences{}
+	for i :=0;i<args.len;i+=1{
+		a:=args[i]
+		match a {
+			// TODO multiple match values per branch
+			'-o'{
+				p.out_name = args[i + 1]
+				i+=1
+			}
+			'--output'{
+				p.out_name = args[i + 1]
+				i+=1
+			}
+			else {
+				if p.command.len == 0 {
+					p.command = a
+				}
+			}
+		}
+	}
+	if p.out_name.len == 0 {
+		p.out_name = p.command.replace('.bait', '')
+	}
+	if p.command == 'test' {
+		p.is_test = true
+	}
+	return p
 }
 
 fun bait_exe_path() string {

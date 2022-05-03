@@ -79,5 +79,5 @@ fun read_file(path string) string {
 fun read_lines(path string) []string {
 	s := read_file(path)
 	res := s.split('\n')
-	return s
+	return res
 }
