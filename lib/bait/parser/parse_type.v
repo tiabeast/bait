@@ -23,7 +23,12 @@ fn (mut p Parser) parse_type() ast.Type {
 	}
 	mut typ := ast.void_type
 	mut name := p.tok.lit
-	if p.expr_pkg.len > 0 {
+	if p.peek_tok.kind == .dot {
+		mod := name
+		p.next()
+		p.check(.dot)
+		name = '${mod}.$p.tok.lit'
+	} else if p.expr_pkg.len > 0 {
 		name = p.expr_pkg + '.' + name
 		p.expr_pkg = ''
 	} else if name !in p.table.type_idxs && !name.contains('.') {

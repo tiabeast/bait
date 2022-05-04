@@ -474,8 +474,8 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 	}
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.left_type)
-		if sym.kind == .array && name == 'push' {
-			g.gen_array_push(node, sym)
+		if sym.kind == .array && name in ['contains', 'push'] {
+			g.gen_array_method(name, node, sym)
 			return
 		} else if sym.kind == .array && name == 'slice' {
 			name = c_name('array_$name')
@@ -508,10 +508,10 @@ fn (mut g Gen) call_args(args []ast.CallArg) {
 	}
 }
 
-fn (mut g Gen) gen_array_push(node ast.CallExpr, sym ast.TypeSymbol) {
+fn (mut g Gen) gen_array_method(name string, node ast.CallExpr, sym ast.TypeSymbol) {
 	info := sym.info as ast.ArrayInfo
 	elem_type_str := g.typ(info.elem_type)
-	g.write('array_push(&')
+	g.write('array_${name}(&')
 	g.expr(node.left)
 	g.write(', ($elem_type_str[]){')
 	g.expr(node.args[0].expr)
