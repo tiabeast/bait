@@ -70,15 +70,6 @@ fun (a &array) push(val &void) {
 	a.len += 1
 }
 
-fun (a &array) contains(val &void) bool {
-	for i:=0; i < a.len; i+=1{
-		if val == a.data + i * a.elem_size {
-			return true
-		}
-	}
-	return false
-}
-
 fun (a array) slice(start i32, end i32) array {
 	data := &u8(a.data) + start * a.elem_size
 	len := end - start
@@ -92,4 +83,14 @@ fun (a array) slice(start i32, end i32) array {
 
 fun (a array) last() &void {
 	return a.data + (a.len - 1) * a.elem_size
+}
+
+// unified contains for all kinds of arrays
+fun (a []string) contains(val string) bool {
+	for i:=0; i < a.len; i+=1{
+		if val == a[i] {
+			return true
+		}
+	}
+	return false
 }

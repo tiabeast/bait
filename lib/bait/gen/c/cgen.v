@@ -474,7 +474,7 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 	}
 	if node.is_method {
 		sym := g.table.get_type_symbol(node.left_type)
-		if sym.kind == .array && name in ['contains', 'push'] {
+		if sym.kind == .array && name == 'push' {
 			g.gen_array_method(name, node, sym)
 			return
 		} else if sym.kind == .array && name == 'slice' {
@@ -750,7 +750,8 @@ fn (mut g Gen) string_literal(node ast.StringLiteral) {
 	if g.lang == .c {
 		g.write('"$node.val"')
 	} else {
-		g.write('SLIT("$node.val")')
+		val := node.val.replace('"', '\\"')
+		g.write('SLIT("$val")')
 	}
 }
 

@@ -31,8 +31,16 @@ fun main() {
 }
 
 fun launch_tool(name string, args []string) i32 {
-	// TODO
-	return 1
+	exe := os.executable()
+	exe_root := os.dir(os.real_path(exe))
+	tool_path := os.join_path(exe_root, ['cmd', 'tools', name])
+	tool_source := tool_path + '.bait'
+	cret := os.system('bait "' + tool_source + '"')
+	if cret != 0 {
+		return cret
+	}
+	tool_args := args.join(' ')
+	return os.system(tool_path + ' ' + tool_args)
 }
 
 fun run_tests(args []string, prefs pref.Preferences) i32 {

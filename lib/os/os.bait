@@ -81,3 +81,18 @@ fun read_lines(path string) []string {
 	res := s.split('\n')
 	return res
 }
+
+fun system(cmd string) i32 {
+	ret := 0
+	ret = C.system(cmd.str)
+	return wait_exit(ret)
+}
+
+fun wait_exit(r i32) i32 {
+	if C.WIFEXITED(r) {
+		return i32(C.WEXITSTATUS(r))
+	} else if C.WIFSIGNALED(r) {
+		return i32(C.WTERMSIG(r))
+	}
+	return r
+}
