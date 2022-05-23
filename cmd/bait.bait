@@ -49,6 +49,22 @@ fun run_tests(args []string, prefs pref.Preferences) i32 {
 }
 
 fun compile(prefs pref.Preferences) i32 {
+	paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
 	// TODO
 	return 1
+}
+
+fun bait_files_from_dir(dir string) []string {
+	all_files := os.ls(dir)
+	files := []string
+	for i := 0; i <all_files.len ; i += 1 {
+		f := all_files[i]
+		if f.ends_with('_test.bait') {
+			continue
+		}
+		if f.ends_with('.bait') {
+			files.push(dir + '/' + f)
+		}
+	}
+	return files
 }

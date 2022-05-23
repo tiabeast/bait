@@ -29,7 +29,7 @@ fn main() {
 		}
 		else {}
 	}
-	if command.ends_with('.bait') || os.exists(command) {
+	if command.ends_with('.bait') || os.is_dir(command) {
 		exit(compile(command, prefs))
 	}
 	eprintln('Unknown command: `bait $command`')

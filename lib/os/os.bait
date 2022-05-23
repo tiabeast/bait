@@ -53,6 +53,16 @@ fun real_path(path string) string {
 	return res.cstring_to_string()
 }
 
+fun resource_abs_path(path string) string {
+	env_resource := getenv('BAIT_RESOURCE_PATH')
+	if env_resource.len != 0 {
+		return real_path(env_resource + '/' + path)
+	}
+	exe := executable()
+	base_path := real_path(dir(exe))
+	return real_path(base_path + '/' + path)
+}
+
 fun executable()string{
 	result := &u8(calloc(4096))
 	count := i32(C.readlink('/proc/self/exe', result, 4096))
@@ -61,6 +71,10 @@ fun executable()string{
 
 fun exists(path string) bool {
 	return C.access(path.str, 0) != -1
+}
+
+fun ls(dir string)[]string {
+	// TODO
 }
 
 fun read_file(path string) string {
