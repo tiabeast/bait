@@ -4,6 +4,8 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 1 * * * '
 
 jobs:
   code-style:
@@ -31,6 +33,9 @@ jobs:
         run: v -o bait cmd/main.v
       - name: Build bait
         run: ./bait cmd/bait.bait
+      - name: Build tools
+        run: |
+          ./bait cmd/tools/help.bait
       - name: Build examples
         run: |
           ./bait examples/hello_world.bait

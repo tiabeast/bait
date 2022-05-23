@@ -203,6 +203,16 @@ fun (s string) index_last(substr string) i32 {
 	return -1
 }
 
+fun (s string) index_u8(c u8) i32 {
+	for i := 0; i < s.len; i += 1 {
+		if s.str[i] == c {
+			return i
+		}
+	}
+	return -1
+}
+
+
 fun (s string) count (substr string) i32 {
 	if s.len == 0 or substr.len == 0 or substr.len > s.len {
 		return 0

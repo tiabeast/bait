@@ -31,7 +31,7 @@ pub fn (s &Scope) find(name string) ScopeObject {
 		if name in scope.objects {
 			return scope.objects[name]
 		}
-		if scope.parent == 0 {
+		if scope.parent == voidptr(0) {
 			break
 		}
 	}
