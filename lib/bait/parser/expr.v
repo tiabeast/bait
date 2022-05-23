@@ -289,6 +289,14 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	}
 }
 
+fn (mut p Parser) c_block() ast.CBlock {
+	val := p.tok.lit
+	p.next()
+	return ast.CBlock{
+		val: val
+	}
+}
+
 fn (mut p Parser) map_init() ast.MapInit {
 	p.check(.lcur)
 	mut keys := []ast.Expr{}
@@ -355,6 +363,9 @@ fn (mut p Parser) name_expr() ast.Expr {
 		p.expr_pkg = p.tok.lit
 		p.next()
 		p.check(.dot)
+	}
+	if lang == .c && p.tok.kind == .string {
+		return p.c_block()
 	}
 	if p.peek_tok.kind == .lpar {
 		if p.tok.lit in p.table.type_idxs {

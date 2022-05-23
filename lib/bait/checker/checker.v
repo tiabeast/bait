@@ -58,6 +58,7 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		ast.EmptyExpr { panic('found empty expr') }
 		ast.ArrayInit { return c.array_init(mut node) }
 		ast.BoolLiteral { return ast.bool_type }
+		ast.CBlock {} // unsafe code that cannot be checked
 		ast.CallExpr { return c.call_expr(mut node) }
 		ast.CastExpr { return c.cast_expr(mut node) }
 		ast.CharLiteral { return ast.u8_type }

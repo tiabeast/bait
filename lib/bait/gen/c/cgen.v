@@ -230,6 +230,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.EmptyExpr { panic('found empty expr') }
 		ast.ArrayInit { g.array_init(node) }
 		ast.BoolLiteral { g.bool_literal(node) }
+		ast.CBlock { g.c_block(node) }
 		ast.CallExpr { g.call_expr(node) }
 		ast.CastExpr { g.cast_expr(node) }
 		ast.CharLiteral { g.char_literal(node) }
@@ -464,6 +465,10 @@ fn (mut g Gen) array_init(node ast.ArrayInit) {
 
 fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
 	g.write('$node.val')
+}
+
+fn (mut g Gen) c_block(node ast.CBlock) {
+	g.writeln(node.val)
 }
 
 fn (mut g Gen) call_expr(node ast.CallExpr) {

@@ -23,6 +23,7 @@ pub type Stmt = AssertStmt
 	| TypeDecl
 pub type Expr = ArrayInit
 	| BoolLiteral
+	| CBlock
 	| CallExpr
 	| CastExpr
 	| CharLiteral
@@ -177,6 +178,11 @@ pub mut:
 pub struct BoolLiteral {
 pub:
 	val bool
+}
+
+pub struct CBlock {
+pub:
+	val string
 }
 
 pub struct CallExpr {
