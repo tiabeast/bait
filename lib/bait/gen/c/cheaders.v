@@ -10,6 +10,7 @@ const c_includes = '#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/stat.h>
 '
 
 const c_builtin_types = 'typedef int8_t i8;

@@ -73,8 +73,26 @@ fun exists(path string) bool {
 	return C.access(path.str, 0) != -1
 }
 
-fun ls(dir string)[]string {
-	// TODO
+fun is_dir(path string) bool {
+	C.'struct stat statbuf;'
+	C.'if (stat(path.str, &statbuf) != 0) {'
+		return false
+	C.'}'
+	C.'i32 val = statbuf.st_mode & 0xF000;'
+	return C.'val == 0x4000'
+}
+
+fun ls(path string)[]string {
+	res := []string{cap: 50}
+	C.'DIR *d;'
+	C.'struct dirent *ent;'
+	C.'while ((ent = readdir(d)) != NULL) {'
+	name := ''
+	C.'name = u8_cstring_to_string(ent->d_name);'
+	res.push(name)
+	C.'}'
+	C.'closedir(d);'
+	return res
 }
 
 fun read_file(path string) string {

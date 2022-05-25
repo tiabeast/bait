@@ -23,7 +23,7 @@ fun main() {
 			exit(run_tests(args.slice(1, args.len), prefs))
 		}
 	}
-	if prefs.command.ends_with('.bait') or os.exists(prefs.command) {
+	if prefs.command.ends_with('.bait') or os.is_dir(prefs.command) {
 		exit(compile(prefs))
 	}
 	eprintln('Unknown command: bait ' + prefs.command)
@@ -50,8 +50,40 @@ fun run_tests(args []string, prefs pref.Preferences) i32 {
 
 fun compile(prefs pref.Preferences) i32 {
 	paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
+	user_files := get_user_files(prefs.command, prefs)
+	paths.push_many(user_files, user_files.len)
 	// TODO
 	return 1
+}
+
+fun get_user_files(path string, prefs pref.Preferences) []string {
+	user_files := []string
+	is_internal_module_test := false
+	if prefs.is_test {
+		content := os.read_file(path)
+		lines := content.split('\n')
+		for i :=0; i < lines.len; i+=1 {
+			line := lines[i]
+			if line.starts_with('package'){
+				if line.starts_with('package main') {
+					break
+				}
+				is_internal_module_test=true
+				break
+			}
+		}
+	}
+	if is_internal_module_test {
+		user_files.push(path)
+		path = os.dir(path)
+	}
+	if not os.is_dir(path) and os.exists(path) and path.ends_with('.bait') {
+		user_files.push(path)
+	} else if os.is_dir(path) {
+		df := bait_files_from_dir(path)
+		user_files.push_many(df, df.len)
+	}
+	return user_files
 }
 
 fun bait_files_from_dir(dir string) []string {

@@ -70,6 +70,12 @@ fun (a &array) push(val &void) {
 	a.len += 1
 }
 
+fun (a &array) push_many(elems &void, n i32) {
+	a.ensure_cap(a.len + n)
+	C.memmove(a.data + a.elem_size * a.len, elems, a.elem_size * n)
+	a.len = a.len + n
+}
+
 fun (a array) slice(start i32, end i32) array {
 	data := &u8(a.data) + start * a.elem_size
 	len := end - start

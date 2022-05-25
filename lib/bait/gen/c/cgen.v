@@ -230,6 +230,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.EmptyExpr { panic('found empty expr') }
 		ast.ArrayInit { g.array_init(node) }
 		ast.BoolLiteral { g.bool_literal(node) }
+		ast.CBlock { g.c_block(node) }
 		ast.CallExpr { g.call_expr(node) }
 		ast.CastExpr { g.cast_expr(node) }
 		ast.CharLiteral { g.char_literal(node) }
@@ -466,6 +467,10 @@ fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
 	g.write('$node.val')
 }
 
+fn (mut g Gen) c_block(node ast.CBlock) {
+	g.writeln(node.val)
+}
+
 fn (mut g Gen) call_expr(node ast.CallExpr) {
 	g.lang = node.lang
 	mut name := c_name(node.name)
@@ -476,6 +481,9 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 		sym := g.table.get_type_symbol(node.left_type)
 		if sym.kind == .array && name == 'push' {
 			g.gen_array_method(name, node, sym)
+			return
+		} else if name == 'push_many' {
+			g.gen_array_push_many(node, sym)
 			return
 		} else if sym.kind == .array && name == 'slice' {
 			name = c_name('array_$name')
@@ -516,6 +524,16 @@ fn (mut g Gen) gen_array_method(name string, node ast.CallExpr, sym ast.TypeSymb
 	g.write(', ($elem_type_str[]){')
 	g.expr(node.args[0].expr)
 	g.write('})')
+}
+
+fn (mut g Gen) gen_array_push_many(node ast.CallExpr, sym ast.TypeSymbol) {
+	g.write('array_push_many(&')
+	g.expr(node.left)
+	g.write(', ')
+	g.expr(node.args[0].expr)
+	g.write('.data, ')
+	g.expr(node.args[1].expr)
+	g.write(')')
 }
 
 fn (mut g Gen) cast_expr(node ast.CastExpr) {
