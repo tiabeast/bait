@@ -126,14 +126,18 @@ fn (mut g Gen) write_sorted_types() {
 }
 
 fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
-	for tsym in type_syms {
-		cname := c_name(tsym.name)
-		match tsym.info {
+	for sym in type_syms {
+		cname := c_name(sym.name)
+		match sym.info {
+			ast.AliasInfo {
+				alias_type := g.typ(sym.info.alias_type)
+				g.type_defs.writeln('typedef $alias_type $cname;')
+			}
 			ast.ArrayInfo {
 				g.type_defs.writeln('typedef array $cname;')
 			}
 			ast.FunInfo {
-				f := (tsym.info as ast.FunInfo).decl
+				f := (sym.info as ast.FunInfo).decl
 				return_str := g.typ(f.return_type)
 				g.type_defs.writeln('typedef $return_str (*$cname) ();')
 			}
@@ -143,11 +147,25 @@ fn (mut g Gen) write_types(type_syms []ast.TypeSymbol) {
 			ast.StructInfo {
 				g.type_defs.writeln('typedef struct $cname $cname;')
 				g.type_impls.writeln('struct $cname {')
-				for field in tsym.info.fields {
+				for field in sym.info.fields {
 					type_name := g.typ(field.typ)
 					field_name := c_name(field.name)
 					g.type_impls.writeln('\t$type_name $field_name;')
 				}
+				g.type_impls.writeln('};\n')
+			}
+			ast.SumTypeInfo {
+				g.type_defs.writeln('typedef struct $cname $cname;')
+				g.type_impls.writeln('struct $cname {')
+				g.type_impls.writeln('\tunion {')
+				for var in sym.info.variants {
+					var_sym := g.table.get_type_symbol(var)
+					var_typ := g.typ(var.set_nr_amp(1))
+					var_cname := c_name(var_sym.name)
+					g.type_impls.writeln('\t\t$var_typ _$var_cname;')
+				}
+				g.type_impls.writeln('\t};')
+				g.type_impls.writeln('\tint _typ;')
 				g.type_impls.writeln('};\n')
 			}
 			ast.OtherInfo {}

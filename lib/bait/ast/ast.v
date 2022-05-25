@@ -162,8 +162,9 @@ pub:
 }
 
 pub struct TypeDecl {
-	name        string
-	parent_type Type
+	name     string
+	typ      Type
+	variants []Type
 }
 
 pub struct ArrayInit {

@@ -5,7 +5,13 @@ module ast
 
 pub type Type = int
 
-pub type TypeInfo = ArrayInfo | FunInfo | MapInfo | OtherInfo | StructInfo
+pub type TypeInfo = AliasInfo
+	| ArrayInfo
+	| FunInfo
+	| MapInfo
+	| OtherInfo
+	| StructInfo
+	| SumTypeInfo
 
 [heap]
 pub struct TypeSymbol {
@@ -38,6 +44,8 @@ pub enum TypeKind {
 	map
 	enum_
 	function
+	alias
+	sum_type
 }
 
 pub enum Language {
@@ -145,6 +153,11 @@ pub fn (sym TypeSymbol) has_method(name string) bool {
 
 pub struct OtherInfo {}
 
+pub struct AliasInfo {
+pub:
+	alias_type Type
+}
+
 pub struct ArrayInfo {
 pub:
 	elem_type Type
@@ -164,4 +177,9 @@ pub mut:
 pub struct StructInfo {
 pub:
 	fields []StructField
+}
+
+pub struct SumTypeInfo {
+pub:
+	variants []Type
 }

@@ -379,8 +379,10 @@ fn (mut c Checker) selector_expr(mut node ast.SelectorExpr) ast.Type {
 				}
 			}
 		}
+		ast.AliasInfo {}
 		ast.FunInfo {}
 		ast.MapInfo {}
+		ast.SumTypeInfo {}
 		ast.OtherInfo {}
 	}
 	return node.field_type

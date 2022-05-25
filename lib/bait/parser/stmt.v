@@ -299,16 +299,44 @@ fn (mut p Parser) struct_decl() ast.StructDecl {
 
 fn (mut p Parser) type_decl() ast.TypeDecl {
 	p.next()
-	name := p.check_name()
+	name := p.prepend_pkg(p.check_name())
 	p.check(.assign)
-	mut typ := ast.void_type
 	if p.tok.kind == .key_fun {
-		typ = p.parse_fun_type(name)
-	} else {
-		typ = p.parse_type()
+		typ := p.parse_fun_type(name)
+		return ast.TypeDecl{
+			name: name
+			variants: [typ]
+		}
 	}
+	mut variants := []ast.Type{}
+	variants << p.parse_type()
+	for p.tok.kind == .pipe {
+		p.next()
+		variants << p.parse_type()
+	}
+	if variants.len > 1 {
+		typ := p.table.register_type_symbol(ast.TypeSymbol{
+			kind: .sum_type
+			name: name
+			info: ast.SumTypeInfo{
+				variants: variants
+			}
+		})
+		return ast.TypeDecl{
+			name: name
+			typ: typ
+			variants: variants
+		}
+	}
+	p.table.register_type_symbol(ast.TypeSymbol{
+		kind: .alias
+		name: name
+		info: ast.AliasInfo{
+			alias_type: variants[0]
+		}
+	})
 	return ast.TypeDecl{
 		name: name
-		parent_type: typ
+		variants: variants
 	}
 }

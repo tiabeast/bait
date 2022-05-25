@@ -46,6 +46,7 @@ pub enum Kind {
 	gt // >
 	le // <=
 	ge // >=
+	pipe // |
 	key_and
 	key_assert
 	key_break

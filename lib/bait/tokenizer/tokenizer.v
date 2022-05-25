@@ -184,6 +184,9 @@ pub fn (mut t Tokenizer) text_scan() token.Token {
 				}
 				return t.new_token(.gt, '')
 			}
+			`|` {
+				return t.new_token(.pipe, '')
+			}
 			else {}
 		}
 		t.error('invalid character: $c.ascii_str()')
