@@ -744,7 +744,9 @@ fn (mut g Gen) match_expr_ifelse(node ast.MatchExpr) {
 }
 
 fn (mut g Gen) prefix_expr(node ast.PrefixExpr) {
-	g.write(node.op.cstr())
+	if node.right !is ast.StructInit {
+		g.write(node.op.cstr())
+	}
 	g.expr(node.right)
 }
 
@@ -794,6 +796,9 @@ fn (mut g Gen) struct_init(node ast.StructInit) {
 		if i < info.fields.len - 1 {
 			g.write(', ')
 		}
+	}
+	if info.fields.len == 0 {
+		g.write('0')
 	}
 	g.write('}')
 }

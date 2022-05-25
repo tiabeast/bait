@@ -19,6 +19,7 @@ mut:
 	expr_pkg           string
 	in_test_file       bool
 	is_expecting_block bool
+	has_amp bool
 	tidx               int
 	prev_tok           token.Token
 	tok                token.Token

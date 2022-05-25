@@ -7,6 +7,9 @@ import lib.bait.ast
 
 fn (mut p Parser) parse_type() ast.Type {
 	mut nr_amp := 0
+	if p.has_amp {
+		nr_amp++
+	}
 	for p.tok.kind == .amp {
 		nr_amp++
 		p.next()

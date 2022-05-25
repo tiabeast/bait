@@ -5,6 +5,7 @@ package main
 
 import os
 import bait.pref
+import bait.ast
 import bait.token
 
 const TOOLS = ['help']
@@ -52,6 +53,7 @@ fun compile(prefs pref.Preferences) i32 {
 	paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
 	user_files := get_user_files(prefs.command, prefs)
 	paths.push_many(user_files, user_files.len)
+	table := ast.new_table()
 	// TODO
 	return 1
 }

@@ -413,8 +413,12 @@ fn (mut p Parser) par_expr() ast.ParExpr {
 
 fn (mut p Parser) prefix_expr() ast.PrefixExpr {
 	op := p.tok.kind
+	if op == .amp {
+		p.has_amp = true
+	}
 	p.next()
 	right := p.name_expr()
+	p.has_amp = false
 	return ast.PrefixExpr{
 		op: op
 		right: right
