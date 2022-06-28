@@ -247,7 +247,7 @@ fn (mut p Parser) package_decl() ast.PackageDecl {
 	name := p.check_name()
 	mut full_name := name
 	if full_name != 'main' {
-		// TODO add bait.mod file and use it as base if not a lib module
+		// TODO_LATER add bait.mod file and use it as base if not a lib module
 		rel_path := p.path.all_after('lib/')
 		if rel_path.len < p.path.len {
 			full_name = rel_path.all_before_last('/').replace('/', '.')

@@ -269,6 +269,19 @@ fn (mut g Gen) expr(node ast.Expr) {
 	}
 }
 
+// TODOLATER fix c warning
+fn (mut g Gen) expr_with_cast(node ast.Expr, got_type ast.Type, expected_type ast.Type) {
+	if g.table.sumtype_has_variant(expected_type, got_type) {
+		etyp := g.typ(expected_type)
+		gtyp := g.typ(got_type)
+		g.write('($etyp){._$gtyp = &')
+		g.expr(node)
+		g.write(', ._typ = $got_type}')
+		return
+	}
+	g.expr(node)
+}
+
 fn (mut g Gen) expr_string(node ast.Expr) string {
 	pos := g.out.len
 	g.expr(node)
@@ -434,9 +447,9 @@ fn (mut g Gen) package_decl(node ast.PackageDecl) {
 fn (mut g Gen) return_stmt(node ast.Return) {
 	if node.needs_tmp_var {
 		g.use_tmp_var = true
-		typ := g.typ(g.cur_fun.return_type)
+		typstr := g.typ(g.cur_fun.return_type)
 		var := g.new_tmp_var()
-		g.writeln('$typ $var;')
+		g.writeln('$typstr $var;')
 		g.expr(node.expr)
 		g.writeln(';')
 		g.writeln('return $var;')
@@ -446,7 +459,7 @@ fn (mut g Gen) return_stmt(node ast.Return) {
 	g.write('return')
 	if node.expr !is ast.EmptyExpr {
 		g.write(' ')
-		g.expr(node.expr)
+		g.expr_with_cast(node.expr, node.typ, g.cur_fun.return_type)
 	}
 	g.writeln(';')
 }

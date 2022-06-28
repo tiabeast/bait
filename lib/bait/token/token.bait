@@ -168,7 +168,7 @@ fun (k Kind) cstr() string {
 		.key_break { 'break' }
 		.key_continue { 'continue' }
 		else { '*unhandled token*' }
-		// TODO enum.str()
+		// TODO_LATER enum.str()
 		// else { k.str() }
 	}
 }

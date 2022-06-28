@@ -2,3 +2,341 @@
 // Copyright (c) 2022 Lukas Neubert.
 // Use of this code is governed by an MIT License (see LICENSE.md).
 package ast
+
+import bait.token
+
+type Stmt = AssertStmt
+	| AssignStmt
+	| ConstDecl
+	| EmptyStmt
+	| EnumDecl
+	| ExprStmt
+	| ForClassicLoop
+	| ForLoop
+	| FunDecl
+	| GlobalDecl
+	| Import
+	| LoopControlStmt
+	| PackageDecl
+	| Return
+	| StructDecl
+	| TypeDecl
+
+type Expr = ArrayInit
+	| BoolLiteral
+	| CBlock
+	| CallExpr
+	| CastExpr
+	| CharLiteral
+	| EmptyExpr
+	| EnumVal
+	| FloatLiteral
+	| Ident
+	| IfExpr
+	| IndexExpr
+	| InfixExpr
+	| IntegerLiteral
+	| MapInit
+	| MatchExpr
+	| ParExpr
+	| PrefixExpr
+	| SelectorExpr
+	| StringLiteral
+	| StructInit
+
+
+struct EmptyStmt {}
+
+struct EmptyExpr {}
+
+fun empty_expr() Expr {
+	return EmptyExpr{}
+}
+
+struct AssertStmt {
+	pos token.Position
+	expr Expr
+}
+
+struct AssignStmt {
+	op token.Kind
+	left       Expr
+	right      Expr
+	left_type  Type
+	right_type Type
+}
+
+struct ConstDecl {
+
+	name string
+	expr Expr
+	typ  Type
+}
+
+struct EnumDecl {
+
+	name        string
+	field_names []string
+}
+
+struct ExprStmt {
+
+	expr Expr
+}
+
+// for cond {}
+struct ForLoop {
+
+	cond  Expr
+	stmts []Stmt
+}
+
+// for i := 0; i < 10; i += 1 {}
+struct ForClassicLoop {
+
+	init  Stmt
+	cond  Expr
+	inc   Stmt
+	stmts []Stmt
+}
+
+struct FunDecl {
+
+	name        string
+	params      []Param
+	return_type Type
+	is_method   bool
+	is_test     bool
+
+	stmts []Stmt
+}
+
+struct Param {
+
+	name string
+	typ  Type
+}
+
+struct GlobalDecl {
+
+	name string
+	typ  Type
+
+	expr Expr
+}
+
+struct Import {
+
+	name  string
+	alias string
+}
+
+struct LoopControlStmt {
+
+	kind token.Kind
+}
+
+struct PackageDecl {
+
+	name      string
+	full_name string
+}
+
+struct Return {
+
+	needs_tmp_var bool
+	expr          Expr
+}
+
+struct StructDecl {
+	name   string
+	fields []StructField
+}
+
+struct StructField {
+
+	name string
+	typ  Type
+}
+
+struct TypeDecl {
+name     string
+	typ      Type
+	variants []Type
+}
+
+struct ArrayInit {
+
+	exprs     []Expr
+	arr_type  Type
+	elem_type Type
+	len_expr  Expr
+	cap_expr  Expr
+}
+
+struct BoolLiteral {
+
+	val bool
+}
+
+struct CBlock {
+
+	val string
+}
+
+struct CallExpr {
+
+	pkg       string
+	lang      Language
+	is_method bool
+
+	name        string
+	args        []CallArg
+	return_type Type
+	left        Expr // receiver or IndexExpr
+	left_type   Type
+}
+
+struct CallArg {
+
+	expr Expr
+}
+
+struct CastExpr {
+
+	target_type Type
+
+	expr Expr
+}
+
+struct CharLiteral {
+
+	val string
+}
+
+struct EnumVal {
+
+	enum_name string
+	val       string
+
+	typ Type
+}
+
+struct FloatLiteral {
+
+	val string
+}
+
+enum IdentKind {
+	unresolved
+	variable
+	constant
+	global_
+}
+
+struct Ident {
+
+	pkg  string
+	lang Language
+
+	name  string
+	kind  IdentKind
+	// scope &Scope
+}
+
+struct IfExpr {
+
+	has_else bool
+
+	branches []IfBranch
+}
+
+struct IfBranch {
+
+	cond  Expr
+	stmts []Stmt
+}
+
+struct IndexExpr {
+
+	index       Expr
+	left        Expr
+	left_type   Type
+	is_selector bool
+}
+
+struct InfixExpr {
+
+	left       Expr
+	right      Expr
+	left_type  Type
+	right_type Type
+
+	op token.Kind
+}
+
+struct IntegerLiteral {
+
+	val string
+}
+
+struct MapInit {
+	typ      Type
+	key_type Type
+	val_type Type
+	keys     []Expr
+	vals     []Expr
+}
+
+struct MatchExpr {
+	is_expr   bool
+	cond      Expr
+	cond_type Type
+	branches  []MatchBranch
+}
+
+struct MatchBranch {
+	val   Expr
+	stmts []Stmt
+}
+
+struct ParExpr {
+	expr Expr
+}
+
+struct PrefixExpr {
+	right      Expr
+	right_type Type
+	op token.Kind
+}
+
+struct SelectorExpr {
+	field_name string
+	field_type Type
+	expr       Expr
+	expr_type  Type
+}
+
+struct StringLiteral {
+	val string
+}
+
+struct StructInit {
+	typ    Type
+	fields []StructInitField
+}
+
+struct StructInitField {
+	expr Expr
+	typ  Type
+	name     string
+	exp_type Type
+}
+
+struct File {
+	path    string
+	is_test bool
+	pkg     PackageDecl
+	imports []Import
+	stmts []Stmt
+}

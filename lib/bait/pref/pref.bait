@@ -13,12 +13,12 @@ struct Preferences {
 }
 
 fun parse_args(args []string) Preferences {
-	// TODO struct pointer inits &pref.Preferences{}
+	// TODO pointer struct init with default fields
 	p := Preferences{}
 	for i :=0;i<args.len;i+=1{
 		a:=args[i]
 		match a {
-			// TODO multiple match values per branch
+			// TODO_LATER multiple match values per branch
 			'-o'{
 				p.out_name = args[i + 1]
 				i+=1

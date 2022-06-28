@@ -147,6 +147,7 @@ pub:
 pub struct Return {
 pub mut:
 	needs_tmp_var bool
+	typ Type
 	expr          Expr
 }
 

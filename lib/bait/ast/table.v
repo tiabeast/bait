@@ -151,3 +151,16 @@ pub fn (t &Table) has_method(sym &TypeSymbol, name string) bool {
 	t.get_method(sym, name) or { return false }
 	return true
 }
+
+pub fn (t &Table) sumtype_has_variant(parent Type, var Type) bool {
+	psym := t.get_type_symbol(parent)
+	if psym.kind == .sum_type {
+		info := psym.info as SumTypeInfo
+		for v in info.variants {
+			if var == v {
+				return true
+			}
+		}
+	}
+	return false
+}

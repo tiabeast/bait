@@ -153,7 +153,8 @@ fn (mut c Checker) return_stmt(mut node ast.Return) {
 			node.needs_tmp_var = true
 		}
 		c.expected_type = c.cur_fun.return_type
-		c.expr(mut node.expr)
+		typ := c.expr(mut node.expr)
+		node.typ = typ
 	}
 }
 

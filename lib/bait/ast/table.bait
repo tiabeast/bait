@@ -5,9 +5,14 @@
 package ast
 
 struct Table {
+    // funs map[string]FunDecl
+    // type_idxs    map[string]int
+	// type_symbols []TypeSymbol
+	// global_scope &Scope
 }
 
 fun new_table() &Table {
     t := &Table{}
+    // TODO
     return t
 }
