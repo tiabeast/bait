@@ -14,5 +14,5 @@ fun main() {
 ```
 
 ## License
-The compiler and standard library are released under the MIT License.
+The content of this repository is released under the MIT License.
 See [LICENSE.md](LICENSE.md) for details.
