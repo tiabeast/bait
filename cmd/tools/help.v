@@ -12,7 +12,7 @@ fn main() {
 	}
 }
 
-fn try_print_topic(topic string){
+fn try_print_topic(topic string) {
 	res := read_help_text(topic)
 	if res.len == 0 {
 		eprintln('Unknown topic: $topic')
@@ -21,12 +21,12 @@ fn try_print_topic(topic string){
 	println(res)
 }
 
-fn read_help_text(topic string)string{
+fn read_help_text(topic string) string {
 	cmd_dir := os.dir(os.dir(os.executable()))
 	help_file := os.join_path(cmd_dir, 'help', topic + '.txt')
-	if !os.exists(help_file){
+	if !os.exists(help_file) {
 		return ''
 	}
-	content := os.read_file(help_file)or{panic(err)}
+	content := os.read_file(help_file) or { panic(err) }
 	return content.trim_space()
 }
