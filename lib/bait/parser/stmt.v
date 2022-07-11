@@ -21,7 +21,7 @@ fn (mut p Parser) stmt() ast.Stmt {
 }
 
 fn (mut p Parser) assign_or_expr_stmt() ast.Stmt {
-	left := p.expr()
+	left := p.expr(0)
 	if p.tok.kind == .decl_assign {
 		return p.partial_assign_stmt(left)
 	}
@@ -33,7 +33,7 @@ fn (mut p Parser) assign_or_expr_stmt() ast.Stmt {
 fn (mut p Parser) partial_assign_stmt(left ast.Expr) ast.AssignStmt {
 	op := p.tok.kind
 	p.next()
-	right := p.expr()
+	right := p.expr(0)
 	return ast.AssignStmt{
 		op: op
 		left: left
@@ -66,7 +66,7 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 
 fn (mut p Parser) expr_stmt() ast.ExprStmt {
 	return ast.ExprStmt{
-		expr: p.expr()
+		expr: p.expr(0)
 	}
 }
 

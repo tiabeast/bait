@@ -57,6 +57,7 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.FloatLiteral { g.float_literal(node) }
 		ast.Ident { g.ident(node) }
 		ast.IfExpr { g.if_expr(node) }
+		ast.InfixExpr { g.infix_expr(node) }
 		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.StringLiteral { g.string_literal(node) }
 	}
@@ -136,6 +137,12 @@ fn (mut g Gen) if_expr(node ast.IfExpr) {
 		g.stmts(b.stmts)
 	}
 	g.writeln('}')
+}
+
+fn (mut g Gen) infix_expr(node ast.InfixExpr) {
+	g.expr(node.left)
+	g.write(' $node.op.vstr() ')
+	g.expr(node.right)
 }
 
 fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {

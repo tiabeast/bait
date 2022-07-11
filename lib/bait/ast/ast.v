@@ -13,6 +13,7 @@ pub type Expr = BoolLiteral
 	| FloatLiteral
 	| Ident
 	| IfExpr
+	| InfixExpr
 	| IntegerLiteral
 	| StringLiteral
 
@@ -79,6 +80,16 @@ pub struct IfBranch {
 pub mut:
 	cond  Expr
 	stmts []Stmt
+}
+
+pub struct InfixExpr {
+pub mut:
+	left       Expr
+	right      Expr
+	left_type  Type
+	right_type Type
+pub:
+	op token.Kind
 }
 
 pub struct IntegerLiteral {

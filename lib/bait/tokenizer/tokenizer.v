@@ -54,6 +54,18 @@ fn (mut t Tokenizer) text_scan() token.Token {
 				str := t.string_literal(c)
 				return t.new_token(.string, str, str.len + 2) // + two quotes
 			}
+			`=` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.eq)
+				}
+			}
+			`!` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.ne)
+				}
+			}
 			`(` {
 				return t.new_kind_token(.lpar)
 			}
@@ -90,6 +102,20 @@ fn (mut t Tokenizer) text_scan() token.Token {
 					t.pos++
 					return t.new_kind_token(.decl_assign)
 				}
+			}
+			`<` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.le)
+				}
+				return t.new_kind_token(.lt)
+			}
+			`>` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.ge)
+				}
+				return t.new_kind_token(.gt)
 			}
 			else {}
 		}

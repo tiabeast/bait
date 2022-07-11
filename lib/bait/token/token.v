@@ -23,6 +23,12 @@ pub enum Kind {
 	rcur // }
 	minus // -
 	comma // ,
+	eq // ==
+	ne // !=
+	lt // <
+	gt // >
+	le // <=
+	ge // >=
 	key_else
 	key_false
 	key_fun
@@ -37,4 +43,18 @@ pub const keywords = {
 	'fun':   Kind.key_fun
 	'if':    Kind.key_if
 	'true':  Kind.key_true
+}
+
+pub fn (k Kind) vstr() string {
+	return match k {
+		.minus { '-' }
+		.decl_assign { ':=' }
+		.eq { '==' }
+		.ne { '!=' }
+		.lt { '<' }
+		.gt { '>' }
+		.le { '<=' }
+		.ge { '>=' }
+		else { k.str() }
+	}
 }

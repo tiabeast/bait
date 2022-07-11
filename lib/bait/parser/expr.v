@@ -5,17 +5,29 @@ module parser
 
 import lib.bait.ast
 
-fn (mut p Parser) expr() ast.Expr {
+fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
 		.name { node = p.name_expr() }
 		.number { node = p.number_literal() }
 		.string { node = p.string_literal() }
-		.key_if{node=p.if_expr()}
+		.key_if { node = p.if_expr() }
 		.key_true, .key_false { node = p.bool_literal() }
 		else { p.error('invalid expression: $p.tok') }
 	}
-	return node
+	return p.expr_with_left(node, precedence)
+}
+
+fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
+	mut left := left_
+	for precedence < p.tok.precedence() {
+		if p.tok.kind in [.eq, .ne, .lt, .gt, .le, .ge] {
+			left = p.infix_expr(left)
+		} else {
+			return left
+		}
+	}
+	return left
 }
 
 fn (mut p Parser) bool_literal() ast.BoolLiteral {
@@ -39,7 +51,7 @@ fn (mut p Parser) call_expr() ast.CallExpr {
 fn (mut p Parser) call_args() []ast.Expr {
 	mut args := []ast.Expr{}
 	for p.tok.kind != .rpar {
-		expr := p.expr()
+		expr := p.expr(0)
 		args << expr
 		if p.tok.kind != .rpar {
 			p.check(.comma)
@@ -71,7 +83,7 @@ fn (mut p Parser) if_expr() ast.IfExpr {
 			}
 		}
 		p.check(.key_if)
-		cond := p.expr()
+		cond := p.expr(0)
 		stmts := p.parse_block_no_scope()
 		branches << ast.IfBranch{
 			cond: cond
@@ -84,6 +96,17 @@ fn (mut p Parser) if_expr() ast.IfExpr {
 	return ast.IfExpr{
 		has_else: has_else
 		branches: branches
+	}
+}
+
+fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
+	op_tok := p.tok
+	p.next()
+	right := p.expr(op_tok.precedence())
+	return ast.InfixExpr{
+		left: left
+		right: right
+		op: op_tok.kind
 	}
 }
 
