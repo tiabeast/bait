@@ -21,7 +21,9 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 	mut left := left_
 	for precedence < p.tok.precedence() {
-		if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge] {
+		if p.tok.kind == .dot {
+			left = p.dot_expr(left)
+		} else if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge] {
 			left = p.infix_expr(left)
 		} else {
 			return left
@@ -58,6 +60,20 @@ fn (mut p Parser) call_args() []ast.Expr {
 		}
 	}
 	return args
+}
+
+fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
+	p.check(.dot)
+	name := p.check_name()
+	p.check(.lpar)
+	args := p.call_args()
+	p.check(.rpar)
+	return ast.CallExpr{
+		name: name
+		args: args
+		left: left
+		is_method: true
+	}
 }
 
 fn (mut p Parser) ident() ast.Ident {

@@ -129,6 +129,9 @@ fn (mut t Tokenizer) text_scan() token.Token {
 			`,` {
 				return t.new_kind_token(.comma)
 			}
+			`.` {
+				return t.new_kind_token(.dot)
+			}
 			`;` {
 				return t.new_kind_token(.semicolon)
 			}

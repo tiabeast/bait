@@ -66,6 +66,8 @@ pub:
 	name        string
 	args        []Expr
 	return_type Type
+	left        Expr
+	is_method   bool
 }
 
 pub struct FloatLiteral {

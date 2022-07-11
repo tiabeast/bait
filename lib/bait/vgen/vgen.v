@@ -114,6 +114,10 @@ fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
 }
 
 fn (mut g Gen) call_expr(node ast.CallExpr) {
+	if node.is_method {
+		g.expr(node.left)
+		g.write('.')
+	}
 	name := v_name(node.name)
 	g.write('${name}(')
 	g.call_args(node.args)

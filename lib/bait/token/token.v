@@ -32,6 +32,7 @@ pub enum Kind {
 	mul_assign // *=
 	div_assign // /=
 	mod_assign // %=
+	dot // .
 	comma // ,
 	semicolon // ;
 	eq // ==

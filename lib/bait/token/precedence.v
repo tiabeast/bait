@@ -8,6 +8,7 @@ pub enum Precedence {
 	compare
 	sum
 	product
+	call
 }
 
 const precedences = build_precedences()
@@ -28,6 +29,8 @@ fn build_precedences() []Precedence {
 	p[Kind.mul] = .product
 	p[Kind.div] = .product
 	p[Kind.mod] = .product
+	// other
+	p[Kind.dot] = .call
 	return p
 }
 
