@@ -23,10 +23,18 @@ pub enum Kind {
 	rcur // }
 	minus // -
 	comma // ,
+	key_else
+	key_false
 	key_fun
+	key_if
+	key_true
 	__end__
 }
 
 pub const keywords = {
-	'fun': Kind.key_fun
+	'else':  Kind.key_else
+	'false': Kind.key_false
+	'fun':   Kind.key_fun
+	'if':    Kind.key_if
+	'true':  Kind.key_true
 }

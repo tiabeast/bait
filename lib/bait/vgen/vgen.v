@@ -52,9 +52,11 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 fn (mut g Gen) expr(node ast.Expr) {
 	match node {
 		ast.EmptyExpr { panic('found empty expr') }
+		ast.BoolLiteral { g.bool_literal(node) }
 		ast.CallExpr { g.call_expr(node) }
 		ast.FloatLiteral { g.float_literal(node) }
 		ast.Ident { g.ident(node) }
+		ast.IfExpr { g.if_expr(node) }
 		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.StringLiteral { g.string_literal(node) }
 	}
@@ -90,6 +92,10 @@ fn (mut g Gen) fun_params(params []ast.Param) {
 	}
 }
 
+fn (mut g Gen) bool_literal(node ast.BoolLiteral) {
+	g.write('$node.val')
+}
+
 fn (mut g Gen) call_expr(node ast.CallExpr) {
 	name := v_name(node.name)
 	g.write('${name}(')
@@ -113,6 +119,23 @@ fn (mut g Gen) float_literal(node ast.FloatLiteral) {
 fn (mut g Gen) ident(node ast.Ident) {
 	name := v_name(node.name)
 	g.write(name)
+}
+
+fn (mut g Gen) if_expr(node ast.IfExpr) {
+	for i, b in node.branches {
+		if i > 0 {
+			g.write('} else ')
+		}
+		if node.has_else && i == node.branches.len - 1 {
+			g.writeln('{')
+		} else {
+			g.write('if ')
+			g.expr(b.cond)
+			g.writeln(' {')
+		}
+		g.stmts(b.stmts)
+	}
+	g.writeln('}')
 }
 
 fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {

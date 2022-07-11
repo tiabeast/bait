@@ -11,9 +11,18 @@ fn (mut p Parser) expr() ast.Expr {
 		.name { node = p.name_expr() }
 		.number { node = p.number_literal() }
 		.string { node = p.string_literal() }
+		.key_if{node=p.if_expr()}
+		.key_true, .key_false { node = p.bool_literal() }
 		else { p.error('invalid expression: $p.tok') }
 	}
 	return node
+}
+
+fn (mut p Parser) bool_literal() ast.BoolLiteral {
+	p.next()
+	return ast.BoolLiteral{
+		val: p.prev_tok.kind == .key_true
+	}
 }
 
 fn (mut p Parser) call_expr() ast.CallExpr {
@@ -43,6 +52,38 @@ fn (mut p Parser) ident() ast.Ident {
 	name := p.check_name()
 	return ast.Ident{
 		name: name
+	}
+}
+
+fn (mut p Parser) if_expr() ast.IfExpr {
+	mut branches := []ast.IfBranch{}
+	mut has_else := false
+	for {
+		if p.tok.kind == .key_else {
+			p.next()
+			if p.tok.kind == .lcur {
+				has_else = true
+				stmts := p.parse_block_no_scope()
+				branches << ast.IfBranch{
+					stmts: stmts
+				}
+				break
+			}
+		}
+		p.check(.key_if)
+		cond := p.expr()
+		stmts := p.parse_block_no_scope()
+		branches << ast.IfBranch{
+			cond: cond
+			stmts: stmts
+		}
+		if p.tok.kind != .key_else {
+			break
+		}
+	}
+	return ast.IfExpr{
+		has_else: has_else
+		branches: branches
 	}
 }
 
