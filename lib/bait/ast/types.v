@@ -62,6 +62,23 @@ pub const (
 	string_type = new_builtin_type(.string_idx)
 )
 
+fn (mut t Table) register_builtin_type_symbols() {
+	t.register_type_symbol(kind: .placeholder, name: 'placeholder')
+	t.register_type_symbol(kind: .void, name: 'void')
+	t.register_type_symbol(kind: .i8, name: 'i8')
+	t.register_type_symbol(kind: .i16, name: 'i16')
+	t.register_type_symbol(kind: .i32, name: 'i32')
+	t.register_type_symbol(kind: .i64, name: 'i64')
+	t.register_type_symbol(kind: .u8, name: 'u8')
+	t.register_type_symbol(kind: .u16, name: 'u16')
+	t.register_type_symbol(kind: .u32, name: 'u32')
+	t.register_type_symbol(kind: .u64, name: 'u64')
+	t.register_type_symbol(kind: .f32, name: 'f32')
+	t.register_type_symbol(kind: .f64, name: 'f64')
+	t.register_type_symbol(kind: .bool, name: 'bool')
+	t.register_type_symbol(kind: .string, name: 'string')
+}
+
 fn new_type(idx int) Type {
 	if idx < 1 || idx > 65535 {
 		panic('type index must be between 1 and 65535')
@@ -71,4 +88,8 @@ fn new_type(idx int) Type {
 
 fn new_builtin_type(tidx TypeIdx) Type {
 	return new_type(int(tidx))
+}
+
+pub fn (t Type) idx() int {
+	return u16(t) & 0xffff
 }

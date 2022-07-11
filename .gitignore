@@ -1,4 +1,5 @@
 # ignore build binaries
+*.out
 vbait
 cmd/tools/*
 !cmd/tools/*/

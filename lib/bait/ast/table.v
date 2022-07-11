@@ -13,7 +13,13 @@ pub mut:
 
 pub fn new_table() &Table {
 	mut t := &Table{}
+	t.register_builtin_type_symbols()
 	return t
+}
+
+pub fn (t &Table) get_type_symbol(typ Type) TypeSymbol {
+	idx := typ.idx()
+	return t.symbols[idx]
 }
 
 pub fn (mut t Table) register_type_symbol(sym TypeSymbol) int {

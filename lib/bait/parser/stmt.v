@@ -50,7 +50,7 @@ fn (mut p Parser) fun_params() []ast.Param {
 	mut params := []ast.Param{}
 	for p.tok.kind != .rpar {
 		name := p.check_name()
-			typ := p.parse_type()
+		typ := p.parse_type()
 		params << ast.Param{
 			name: name
 			typ: typ

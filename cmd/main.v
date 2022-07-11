@@ -8,6 +8,7 @@ import lib.bait.pref
 import lib.bait.ast
 import lib.bait.tokenizer
 import lib.bait.parser
+import lib.bait.vgen
 
 const tools = ['help']
 
@@ -49,7 +50,20 @@ fn compile(prefs pref.Preferences) int {
 		tokens := tokenizer.tokenize_text(text)
 		files << parser.parse_tokens(tokens, p, table)
 	}
-	// TODO
+	// TODO deps resolving
+	// TODO deps ordering
+	// TODO type checking
+	res := vgen.gen(files, table)
+	tmp_path := os.temp_dir() + '/a.tmp.v'
+	os.write_file(tmp_path, res) or { panic(err) }
+	out_file := 'a.out'
+	cmd_res := os.execute('v -o "$out_file" "$tmp_path"')
+	if cmd_res.output.len > 0 {
+		eprintln(cmd_res.output)
+	}
+	if cmd_res.exit_code != 0 {
+		return 1
+	}
 	return 0
 }
 
