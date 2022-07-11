@@ -66,6 +66,19 @@ fn (mut t Tokenizer) text_scan() token.Token {
 			`}` {
 				return t.new_kind_token(.rcur)
 			}
+			`/` {
+				match t.next_char() {
+					`/` {
+						t.ignore_line()
+						continue
+					}
+					`*` {
+						t.block_comment()
+						continue
+					}
+					else {}
+				}
+			}
 			`,` {
 				return t.new_kind_token(.comma)
 			}
@@ -154,6 +167,34 @@ fn (mut t Tokenizer) skip_whitespace() {
 		}
 		t.pos++
 	}
+}
+
+fn (mut t Tokenizer) ignore_line() {
+	for t.pos < t.text.len && t.text[t.pos] != `\n` {
+		t.pos++
+	}
+	t.line_nr++
+	t.last_nl_pos = t.pos
+}
+
+fn (mut t Tokenizer) block_comment() {
+	mut nest_count := 1
+	t.pos++
+	for nest_count > 0 {
+		t.pos++
+		if t.text[t.pos] == `\n` {
+			t.line_nr++
+		} else if t.text[t.pos] == `/` && t.text[t.pos + 1] == `*` {
+			nest_count++
+		} else if t.text[t.pos] == `*` && t.text[t.pos + 1] == `/` {
+			nest_count--
+		}
+	}
+	t.pos++
+}
+
+fn (t Tokenizer) next_char() u8 {
+	return if t.pos + 1 < t.text.len { t.text[t.pos + 1] } else { `\0` }
 }
 
 fn (t Tokenizer) new_token(kind token.Kind, lit string, len int) token.Token {
