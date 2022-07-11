@@ -33,6 +33,7 @@ pub enum Kind {
 	div_assign // /=
 	mod_assign // %=
 	comma // ,
+	semicolon // ;
 	eq // ==
 	ne // !=
 	lt // <
@@ -41,6 +42,7 @@ pub enum Kind {
 	ge // >=
 	key_else
 	key_false
+	key_for
 	key_fun
 	key_if
 	key_true
@@ -50,6 +52,7 @@ pub enum Kind {
 pub const keywords = {
 	'else':  Kind.key_else
 	'false': Kind.key_false
+	'for':   Kind.key_for
 	'fun':   Kind.key_fun
 	'if':    Kind.key_if
 	'true':  Kind.key_true

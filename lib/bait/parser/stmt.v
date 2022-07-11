@@ -16,6 +16,7 @@ fn (mut p Parser) top_level_stmt() ast.Stmt {
 fn (mut p Parser) stmt() ast.Stmt {
 	match p.tok.kind {
 		.name { return p.assign_or_expr_stmt() }
+		.key_for { return p.for_stmt() }
 		else { return p.expr_stmt() }
 	}
 }
@@ -38,6 +39,23 @@ fn (mut p Parser) partial_assign_stmt(left ast.Expr) ast.AssignStmt {
 		op: op
 		left: left
 		right: right
+	}
+}
+
+fn (mut p Parser) for_stmt() ast.Stmt {
+	p.check(.key_for)
+	p.open_scope()
+	init := p.assign_or_expr_stmt()
+	p.check(.semicolon)
+	cond := p.expr(0)
+	p.check(.semicolon)
+	inc := p.stmt()
+	stmts := p.parse_block_no_scope()
+	return ast.ForClassicLoop{
+		init: init
+		cond: cond
+		inc: inc
+		stmts: stmts
 	}
 }
 

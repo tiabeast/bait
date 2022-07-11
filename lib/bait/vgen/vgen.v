@@ -9,9 +9,10 @@ import lib.bait.ast
 struct Gen {
 	table &ast.Table
 mut:
-	indent     int
-	empty_line bool
-	out        strings.Builder
+	inside_for_classic bool
+	indent             int
+	empty_line         bool
+	out                strings.Builder
 }
 
 pub fn gen(files []ast.File, table &ast.Table) string {
@@ -42,6 +43,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.EmptyStmt { panic('found empty stmt') }
 		ast.AssignStmt { g.assign_stmt(node) }
 		ast.ExprStmt { g.expr(node.expr) }
+		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
 	}
 	if node is ast.ExprStmt && !g.empty_line {
@@ -64,14 +66,26 @@ fn (mut g Gen) expr(node ast.Expr) {
 }
 
 fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
-	// TODO proper mut
-	if node.op == .decl_assign {
-		g.write('mut ')
-	}
 	g.expr(node.left)
 	g.write(' $node.op.vstr() ')
 	g.expr(node.right)
-	g.writeln('')
+	if !g.inside_for_classic {
+		g.writeln('')
+	}
+}
+
+fn (mut g Gen) for_classic_loop(node ast.ForClassicLoop) {
+	g.inside_for_classic = true
+	g.write('for ')
+	g.stmt(node.init)
+	g.write('; ')
+	g.expr(node.cond)
+	g.write('; ')
+	g.stmt(node.inc)
+	g.writeln(' {')
+	g.inside_for_classic = true
+	g.stmts(node.stmts)
+	g.writeln('}')
 }
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {

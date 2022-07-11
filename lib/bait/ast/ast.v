@@ -5,7 +5,7 @@ module ast
 
 import lib.bait.token
 
-pub type Stmt = AssignStmt | EmptyStmt | ExprStmt | FunDecl
+pub type Stmt = AssignStmt | EmptyStmt | ExprStmt | ForClassicLoop | FunDecl
 
 pub type Expr = BoolLiteral
 	| CallExpr
@@ -30,6 +30,15 @@ pub mut:
 pub struct ExprStmt {
 pub mut:
 	expr Expr
+}
+
+// for i := 0; i < 10; i += 1 {}
+pub struct ForClassicLoop {
+pub mut:
+	init  Stmt
+	cond  Expr
+	inc   Stmt
+	stmts []Stmt
 }
 
 pub struct FunDecl {
