@@ -5,7 +5,9 @@ module main
 
 import os
 import lib.bait.pref
+import lib.bait.ast
 import lib.bait.tokenizer
+import lib.bait.parser
 
 const tools = ['help']
 
@@ -40,10 +42,12 @@ fn launch_tool(name string, args []string) int {
 fn compile(prefs pref.Preferences) int {
 	mut paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
 	paths << get_user_files(prefs.command)
+	mut files := []ast.File{}
+	mut table := ast.new_table()
 	for p in paths {
 		text := os.read_file(p) or { panic(err) }
 		tokens := tokenizer.tokenize_text(text)
-		// TODO
+		files << parser.parse_tokens(tokens, p, table)
 	}
 	// TODO
 	return 0

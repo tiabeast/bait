@@ -66,6 +66,9 @@ fn (mut t Tokenizer) text_scan() token.Token {
 			`}` {
 				return t.new_kind_token(.rcur)
 			}
+			`,` {
+				return t.new_kind_token(.comma)
+			}
 			else {}
 		}
 		t.error('invalid character: $c.ascii_str()')
