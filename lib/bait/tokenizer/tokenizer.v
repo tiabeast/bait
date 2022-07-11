@@ -79,6 +79,9 @@ fn (mut t Tokenizer) text_scan() token.Token {
 					else {}
 				}
 			}
+			`-` {
+				return t.new_kind_token(.minus)
+			}
 			`,` {
 				return t.new_kind_token(.comma)
 			}

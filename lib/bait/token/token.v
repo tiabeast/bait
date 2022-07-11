@@ -21,6 +21,7 @@ pub enum Kind {
 	rpar // )
 	lcur // {
 	rcur // }
+	minus // -
 	comma // ,
 	key_fun
 	__end__

@@ -9,6 +9,7 @@ fn (mut p Parser) expr() ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
 		.name { node = p.name_expr() }
+		.number { node = p.number_literal() }
 		.string { node = p.string_literal() }
 		else { p.error('invalid expression: $p.tok') }
 	}
@@ -50,6 +51,26 @@ fn (mut p Parser) name_expr() ast.Expr {
 		return p.call_expr()
 	}
 	return p.ident()
+}
+
+fn (mut p Parser) number_literal() ast.Expr {
+	is_neg := p.tok.kind == .minus
+	if is_neg {
+		p.next()
+	}
+	mut val := p.tok.lit
+	if is_neg {
+		val = '-$val'
+	}
+	p.next()
+	if val.contains('.') {
+		return ast.FloatLiteral{
+			val: val
+		}
+	}
+	return ast.IntegerLiteral{
+		val: val
+	}
 }
 
 fn (mut p Parser) string_literal() ast.StringLiteral {

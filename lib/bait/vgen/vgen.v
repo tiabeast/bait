@@ -53,7 +53,9 @@ fn (mut g Gen) expr(node ast.Expr) {
 	match node {
 		ast.EmptyExpr { panic('found empty expr') }
 		ast.CallExpr { g.call_expr(node) }
+		ast.FloatLiteral { g.float_literal(node) }
 		ast.Ident { g.ident(node) }
+		ast.IntegerLiteral { g.integer_literal(node) }
 		ast.StringLiteral { g.string_literal(node) }
 	}
 }
@@ -104,9 +106,17 @@ fn (mut g Gen) call_args(args []ast.Expr) {
 	}
 }
 
+fn (mut g Gen) float_literal(node ast.FloatLiteral) {
+	g.write(node.val)
+}
+
 fn (mut g Gen) ident(node ast.Ident) {
 	name := v_name(node.name)
 	g.write(name)
+}
+
+fn (mut g Gen) integer_literal(node ast.IntegerLiteral) {
+	g.write(node.val)
 }
 
 fn (mut g Gen) string_literal(node ast.StringLiteral) {

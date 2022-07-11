@@ -7,7 +7,7 @@ import lib.bait.token
 
 pub type Stmt = AssignStmt | EmptyStmt | ExprStmt | FunDecl
 
-pub type Expr = CallExpr | EmptyExpr | Ident | StringLiteral
+pub type Expr = CallExpr | EmptyExpr | FloatLiteral | Ident | IntegerLiteral | StringLiteral
 
 pub struct AssignStmt {
 pub:
@@ -46,9 +46,19 @@ pub:
 	return_type Type
 }
 
+pub struct FloatLiteral {
+pub:
+	val string
+}
+
 pub struct Ident {
 pub mut:
 	name string
+}
+
+pub struct IntegerLiteral {
+pub:
+	val string
 }
 
 pub struct StringLiteral {
