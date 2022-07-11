@@ -82,6 +82,12 @@ fn (mut t Tokenizer) text_scan() token.Token {
 			`,` {
 				return t.new_kind_token(.comma)
 			}
+			`:` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.decl_assign)
+				}
+			}
 			else {}
 		}
 		t.error('invalid character: $c.ascii_str()')

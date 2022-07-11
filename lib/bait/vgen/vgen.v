@@ -40,6 +40,7 @@ fn (mut g Gen) stmts(stmts []ast.Stmt) {
 fn (mut g Gen) stmt(node ast.Stmt) {
 	match node {
 		ast.EmptyStmt { panic('found empty stmt') }
+		ast.AssignStmt { g.assign_stmt(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.FunDecl { g.fun_decl(node) }
 	}
@@ -55,6 +56,15 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.Ident { g.ident(node) }
 		ast.StringLiteral { g.string_literal(node) }
 	}
+}
+
+fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
+	g.expr(node.left)
+	if node.op == .decl_assign {
+		g.write(' := ')
+	}
+	g.expr(node.right)
+	g.writeln('')
 }
 
 fn (mut g Gen) fun_decl(node ast.FunDecl) {

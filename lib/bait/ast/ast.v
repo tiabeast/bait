@@ -3,9 +3,21 @@
 // Use of this code is governed by an MIT License (see LICENSE.md).
 module ast
 
-pub type Stmt = EmptyStmt | ExprStmt | FunDecl
+import lib.bait.token
+
+pub type Stmt = AssignStmt | EmptyStmt | ExprStmt | FunDecl
 
 pub type Expr = CallExpr | EmptyExpr | Ident | StringLiteral
+
+pub struct AssignStmt {
+pub:
+	op token.Kind
+pub mut:
+	left       Expr
+	right      Expr
+	left_type  Type
+	right_type Type
+}
 
 pub struct ExprStmt {
 pub mut:

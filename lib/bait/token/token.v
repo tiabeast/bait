@@ -16,6 +16,7 @@ pub enum Kind {
 	name
 	number
 	string
+	decl_assign // :=
 	lpar // (
 	rpar // )
 	lcur // {
