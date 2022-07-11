@@ -22,7 +22,7 @@ fn (mut p Parser) stmt() ast.Stmt {
 
 fn (mut p Parser) assign_or_expr_stmt() ast.Stmt {
 	left := p.expr(0)
-	if p.tok.kind == .decl_assign {
+	if p.tok.kind in [.assign, .decl_assign] || p.tok.kind.is_math_assign() {
 		return p.partial_assign_stmt(left)
 	}
 	return ast.ExprStmt{

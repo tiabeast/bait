@@ -59,6 +59,7 @@ fn (mut t Tokenizer) text_scan() token.Token {
 					t.pos++
 					return t.new_kind_token(.eq)
 				}
+				return t.new_kind_token(.assign)
 			}
 			`!` {
 				if t.next_char() == `=` {
@@ -78,6 +79,27 @@ fn (mut t Tokenizer) text_scan() token.Token {
 			`}` {
 				return t.new_kind_token(.rcur)
 			}
+			`+` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.plus_assign)
+				}
+				return t.new_kind_token(.plus)
+			}
+			`-` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.minus_assign)
+				}
+				return t.new_kind_token(.minus)
+			}
+			`*` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.mul_assign)
+				}
+				return t.new_kind_token(.mul)
+			}
 			`/` {
 				match t.next_char() {
 					`/` {
@@ -88,11 +110,21 @@ fn (mut t Tokenizer) text_scan() token.Token {
 						t.block_comment()
 						continue
 					}
-					else {}
+					`=` {
+						t.pos++
+						return t.new_kind_token(.div_assign)
+					}
+					else {
+						return t.new_kind_token(.div)
+					}
 				}
 			}
-			`-` {
-				return t.new_kind_token(.minus)
+			`%` {
+				if t.next_char() == `=` {
+					t.pos++
+					return t.new_kind_token(.mod_assign)
+				}
+				return t.new_kind_token(.mod)
 			}
 			`,` {
 				return t.new_kind_token(.comma)

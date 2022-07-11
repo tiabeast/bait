@@ -64,10 +64,12 @@ fn (mut g Gen) expr(node ast.Expr) {
 }
 
 fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
-	g.expr(node.left)
+	// TODO proper mut
 	if node.op == .decl_assign {
-		g.write(' := ')
+		g.write('mut ')
 	}
+	g.expr(node.left)
+	g.write(' $node.op.vstr() ')
 	g.expr(node.right)
 	g.writeln('')
 }

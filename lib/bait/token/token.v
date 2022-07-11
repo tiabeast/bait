@@ -16,12 +16,22 @@ pub enum Kind {
 	name
 	number
 	string
+	assign // =
 	decl_assign // :=
 	lpar // (
 	rpar // )
 	lcur // {
 	rcur // }
+	plus // +
 	minus // -
+	mul // *
+	div // /
+	mod // %
+	plus_assign // +=
+	minus_assign // -=
+	mul_assign // *=
+	div_assign // /=
+	mod_assign // %=
 	comma // ,
 	eq // ==
 	ne // !=
@@ -45,10 +55,24 @@ pub const keywords = {
 	'true':  Kind.key_true
 }
 
+pub fn (k Kind) is_math_assign() bool {
+	return k in [.plus_assign, .minus_assign, .mul_assign, .div_assign, .mod_assign]
+}
+
 pub fn (k Kind) vstr() string {
 	return match k {
-		.minus { '-' }
+		.assign { '=' }
 		.decl_assign { ':=' }
+		.plus { '+' }
+		.minus { '-' }
+		.mul { '*' }
+		.div { '/' }
+		.mod { '%' }
+		.plus_assign { '+=' }
+		.minus_assign { '-=' }
+		.mul_assign { '*=' }
+		.div_assign { '/=' }
+		.mod_assign { '%=' }
 		.eq { '==' }
 		.ne { '!=' }
 		.lt { '<' }

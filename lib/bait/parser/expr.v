@@ -21,7 +21,7 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 	mut left := left_
 	for precedence < p.tok.precedence() {
-		if p.tok.kind in [.eq, .ne, .lt, .gt, .le, .ge] {
+		if p.tok.kind in [.plus, .minus, .mul, .div, .mod, .eq, .ne, .lt, .gt, .le, .ge] {
 			left = p.infix_expr(left)
 		} else {
 			return left
