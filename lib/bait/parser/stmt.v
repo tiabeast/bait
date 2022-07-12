@@ -59,10 +59,17 @@ fn (mut p Parser) for_stmt() ast.Stmt {
 	}
 }
 
+fn (mut p Parser) expr_stmt() ast.ExprStmt {
+	return ast.ExprStmt{
+		expr: p.expr(0)
+	}
+}
+
 fn (mut p Parser) fun_decl() ast.FunDecl {
 	p.check(.key_fun)
 	p.open_scope()
-	name := p.check_name()
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
 	p.check(.lpar)
 	params := p.fun_params()
 	p.check(.rpar)
@@ -80,12 +87,6 @@ fn (mut p Parser) fun_decl() ast.FunDecl {
 	node.stmts = stmts
 	p.close_scope()
 	return node
-}
-
-fn (mut p Parser) expr_stmt() ast.ExprStmt {
-	return ast.ExprStmt{
-		expr: p.expr(0)
-	}
 }
 
 fn (mut p Parser) fun_params() []ast.Param {

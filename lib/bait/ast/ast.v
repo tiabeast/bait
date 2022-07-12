@@ -5,7 +5,7 @@ module ast
 
 import lib.bait.token
 
-pub type Stmt = AssignStmt | EmptyStmt | ExprStmt | ForClassicLoop | FunDecl
+pub type Stmt = AssignStmt | EmptyStmt | ExprStmt | ForClassicLoop | FunDecl | PackageDecl
 
 pub type Expr = BoolLiteral
 	| CallExpr
@@ -56,17 +56,26 @@ pub:
 	typ  Type
 }
 
+pub struct PackageDecl {
+pub:
+	no_package bool
+	name       string
+	full_name  string
+}
+
 pub struct BoolLiteral {
 pub:
 	val bool
 }
 
 pub struct CallExpr {
+pub mut:
+	name     string
+	pkg_name string
+	left     Expr
+	args     []Expr
 pub:
-	name        string
-	args        []Expr
 	return_type Type
-	left        Expr
 	is_method   bool
 }
 
@@ -122,7 +131,8 @@ pub fn empty_expr() Expr {
 }
 
 pub struct File {
-pub:
-	path  string
+pub mut:
 	stmts []Stmt
+pub:
+	path string
 }

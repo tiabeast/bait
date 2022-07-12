@@ -46,17 +46,19 @@ pub enum Kind {
 	key_for
 	key_fun
 	key_if
+	key_package
 	key_true
 	__end__
 }
 
 pub const keywords = {
-	'else':  Kind.key_else
-	'false': Kind.key_false
-	'for':   Kind.key_for
-	'fun':   Kind.key_fun
-	'if':    Kind.key_if
-	'true':  Kind.key_true
+	'else':    Kind.key_else
+	'false':   Kind.key_false
+	'for':     Kind.key_for
+	'fun':     Kind.key_fun
+	'if':      Kind.key_if
+	'package': Kind.key_package
+	'true':    Kind.key_true
 }
 
 pub fn (k Kind) is_math_assign() bool {

@@ -1,9 +1,13 @@
-# ignore build binaries
-*.out
+# build binaries
 vbait
+*.out
 cmd/tools/*
 !cmd/tools/*/
 !cmd/tools/*.*
+
+# self hosted compiler
+*.bait
+!examples/*.bait
 
 # editor files
 *.code-workspace

@@ -12,13 +12,14 @@ struct Parser {
 mut:
 	table    &ast.Table
 	scope    &ast.Scope
+	pkg_name string
 	tidx     int
 	prev_tok token.Token
 	tok      token.Token
 	peek_tok token.Token
 }
 
-pub fn parse_tokens(tokens []token.Token, path string, table &ast.Table) ast.File {
+pub fn parse_tokens(tokens []token.Token, path string, table &ast.Table) &ast.File {
 	mut p := Parser{
 		path: path
 		all_tokens: tokens
@@ -30,17 +31,18 @@ pub fn parse_tokens(tokens []token.Token, path string, table &ast.Table) ast.Fil
 	return p.parse()
 }
 
-fn (mut p Parser) parse() ast.File {
+fn (mut p Parser) parse() &ast.File {
 	p.next()
 	p.next()
 	mut stmts := []ast.Stmt{}
+	stmts << p.package_decl()
 	for {
 		if p.tok.kind == .eof {
 			break
 		}
 		stmts << p.top_level_stmt()
 	}
-	return ast.File{
+	return &ast.File{
 		path: p.path
 		stmts: stmts
 	}
@@ -89,4 +91,31 @@ fn (mut p Parser) next() {
 fn (mut p Parser) error(msg string) {
 	eprintln('$p.path: $msg')
 	exit(1)
+}
+
+fn (p Parser) prepend_pkg(val string) string {
+	return '${p.pkg_name}.$val'
+}
+
+fn (mut p Parser) package_decl() ast.PackageDecl {
+	mut name := 'main'
+	no_package := p.tok.kind != .key_package
+	if no_package {
+	} else {
+		p.check(.key_package)
+		name = p.check_name()
+	}
+	mut full_name := name
+	if full_name != 'main' {
+		rel_path := p.path.all_after('lib/')
+		if rel_path.len < p.path.len {
+			full_name = rel_path.all_before_last('/').replace('/', '.')
+		}
+	}
+	p.pkg_name = name
+	return ast.PackageDecl{
+		no_package: no_package
+		name: name
+		full_name: full_name
+	}
 }

@@ -8,6 +8,7 @@ import lib.bait.pref
 import lib.bait.ast
 import lib.bait.tokenizer
 import lib.bait.parser
+import lib.bait.checker
 import lib.bait.vgen
 
 const tools = ['help']
@@ -43,7 +44,7 @@ fn launch_tool(name string, args []string) int {
 fn compile(prefs pref.Preferences) int {
 	mut paths := bait_files_from_dir(os.resource_abs_path('lib/builtin'))
 	paths << get_user_files(prefs.command)
-	mut files := []ast.File{}
+	mut files := []&ast.File{}
 	mut table := ast.new_table()
 	for p in paths {
 		text := os.read_file(p) or { panic(err) }
@@ -52,7 +53,14 @@ fn compile(prefs pref.Preferences) int {
 	}
 	// TODO deps resolving
 	// TODO deps ordering
-	// TODO type checking
+	mut c := checker.new_checker(table)
+	c.check_files(files)
+	if c.errors.len > 0 {
+		for err in c.errors {
+			eprintln(err)
+		}
+		return 1
+	}
 	res := vgen.gen(files, table)
 	tmp_path := os.temp_dir() + '/a.tmp.v'
 	os.write_file(tmp_path, res) or { panic(err) }

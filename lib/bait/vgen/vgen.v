@@ -15,11 +15,12 @@ mut:
 	out                strings.Builder
 }
 
-pub fn gen(files []ast.File, table &ast.Table) string {
+pub fn gen(files []&ast.File, table &ast.Table) string {
 	mut g := Gen{
 		table: table
 		out: strings.new_builder(10000)
 	}
+	g.v_main()
 	for file in files {
 		g.indent--
 		g.stmts(file.stmts)
@@ -28,6 +29,12 @@ pub fn gen(files []ast.File, table &ast.Table) string {
 	mut sb := strings.new_builder(100000)
 	sb.writeln(g.out.str())
 	return sb.str()
+}
+
+fn (mut g Gen) v_main() {
+	g.writeln('fn main() {')
+	g.writeln('\tmain__main()')
+	g.writeln('}\n')
 }
 
 fn (mut g Gen) stmts(stmts []ast.Stmt) {
@@ -45,6 +52,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
+		ast.PackageDecl {} // no separate action required
 	}
 	if node is ast.ExprStmt && !g.empty_line {
 		g.writeln('')
@@ -198,11 +206,7 @@ fn (mut g Gen) writeln(s string) {
 	g.empty_line = true
 }
 
-const v_reserved = []string{}
-
-fn v_name(name string) string {
-	if name in vgen.v_reserved {
-		return 'bait_$name'
-	}
+fn v_name(n string) string {
+	name := n.replace('.', '__')
 	return name
 }
