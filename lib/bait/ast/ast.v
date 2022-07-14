@@ -72,6 +72,7 @@ pub struct CallExpr {
 pub mut:
 	name     string
 	pkg_name string
+	lang     Language
 	left     Expr
 	args     []Expr
 pub:

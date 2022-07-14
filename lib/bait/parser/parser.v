@@ -81,6 +81,15 @@ fn (mut p Parser) check_name() string {
 	return p.prev_tok.lit
 }
 
+fn (mut p Parser) check_lang_prefix() ast.Language {
+	if p.tok.lit == 'V' {
+		p.next()
+		p.check(.dot)
+		return .v
+	}
+	return .bait
+}
+
 fn (mut p Parser) next() {
 	p.prev_tok = p.tok
 	p.tok = p.peek_tok

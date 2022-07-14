@@ -94,7 +94,7 @@ fn (mut c Checker) call_expr(mut node ast.CallExpr) ast.Type {
 
 fn (mut c Checker) fun_call(mut node ast.CallExpr) {
 	mut found := false
-	if node.name in c.table.funs {
+	if node.name in c.table.funs || node.lang == .v {
 		found = true
 	}
 	if !found && !node.name.contains('.') {

@@ -39,7 +39,19 @@ fn (mut p Parser) bool_literal() ast.BoolLiteral {
 	}
 }
 
-fn (mut p Parser) call_expr() ast.CallExpr {
+fn (mut p Parser) fun_call(lang ast.Language) ast.CallExpr {
+	name := p.check_name()
+	p.check(.lpar)
+	args := p.call_args()
+	p.check(.rpar)
+	return ast.CallExpr{
+		name: name
+		lang: lang
+		args: args
+	}
+}
+
+fn (mut p Parser) method_call(left ast.Expr) ast.CallExpr {
 	name := p.check_name()
 	p.check(.lpar)
 	args := p.call_args()
@@ -47,6 +59,8 @@ fn (mut p Parser) call_expr() ast.CallExpr {
 	return ast.CallExpr{
 		name: name
 		args: args
+		left: left
+		is_method: true
 	}
 }
 
@@ -64,16 +78,7 @@ fn (mut p Parser) call_args() []ast.Expr {
 
 fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	p.check(.dot)
-	name := p.check_name()
-	p.check(.lpar)
-	args := p.call_args()
-	p.check(.rpar)
-	return ast.CallExpr{
-		name: name
-		args: args
-		left: left
-		is_method: true
-	}
+	return p.method_call(left)
 }
 
 fn (mut p Parser) ident() ast.Ident {
@@ -127,8 +132,9 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 }
 
 fn (mut p Parser) name_expr() ast.Expr {
+	lang := p.check_lang_prefix()
 	if p.peek_tok.kind == .lpar {
-		return p.call_expr()
+		return p.fun_call(lang)
 	}
 	return p.ident()
 }
