@@ -41,6 +41,7 @@ pub enum Kind {
 	gt // >
 	le // <=
 	ge // >=
+	key_const
 	key_else
 	key_false
 	key_for
@@ -53,6 +54,7 @@ pub enum Kind {
 }
 
 pub const keywords = {
+	'const':   Kind.key_const
 	'else':    Kind.key_else
 	'false':   Kind.key_false
 	'for':     Kind.key_for

@@ -49,6 +49,7 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 	match mut node {
 		ast.EmptyStmt { panic('found empty stmt') }
 		ast.AssignStmt { c.assign_stmt(mut node) }
+		ast.ConstDecl { c.const_decl(mut node) }
 		ast.ExprStmt { c.expr(mut node.expr) }
 		ast.ForClassicLoop { c.for_classic_stmt(mut node) }
 		ast.FunDecl { c.fun_decl(mut node) }
@@ -74,6 +75,10 @@ fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 	c.expr(mut node.right)
 	c.expr(mut node.left)
+}
+
+fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
+	c.expr(mut node.expr)
 }
 
 fn (mut c Checker) for_classic_stmt(mut node ast.ForClassicLoop) {

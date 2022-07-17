@@ -12,12 +12,14 @@ mut:
 	inside_for_classic bool
 	indent             int
 	empty_line         bool
+	decls strings.Builder
 	out                strings.Builder
 }
 
 pub fn gen(files []&ast.File, table &ast.Table) string {
 	mut g := Gen{
 		table: table
+		decls: strings.new_builder(100)
 		out: strings.new_builder(10000)
 	}
 	g.v_main()
@@ -27,6 +29,7 @@ pub fn gen(files []&ast.File, table &ast.Table) string {
 		g.indent++
 	}
 	mut sb := strings.new_builder(100000)
+	sb.writeln(g.decls.str())
 	sb.writeln(g.out.str())
 	return sb.str()
 }
@@ -49,6 +52,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 	match node {
 		ast.EmptyStmt { panic('found empty stmt') }
 		ast.AssignStmt { g.assign_stmt(node) }
+		ast.ConstDecl { g.const_decl(node) }
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
@@ -72,7 +76,12 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.StringLiteral { g.string_literal(node) }
 	}
 }
-
+fn (mut g Gen) expr_string(node ast.Expr) string {
+	pos := g.out.len
+	g.expr(node)
+	expr_str := g.out.cut_to(pos)
+	return expr_str.trim_space()
+}
 fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 	g.expr(node.left)
 	g.write(' $node.op.vstr() ')
@@ -80,6 +89,12 @@ fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 	if !g.inside_for_classic {
 		g.writeln('')
 	}
+}
+
+fn (mut g Gen) const_decl(node ast.ConstDecl) {
+	name := v_name(node.name).to_lower()
+	g.decls.write_string('const $name = ')
+	g.decls.writeln(g.expr_string(node.expr))
 }
 
 fn (mut g Gen) for_classic_loop(node ast.ForClassicLoop) {

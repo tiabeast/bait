@@ -7,6 +7,7 @@ import lib.bait.ast
 
 fn (mut p Parser) top_level_stmt() ast.Stmt {
 	match p.tok.kind {
+		.key_const { return p.const_decl() }
 		.key_fun { return p.fun_decl() }
 		else { p.error('bad toplevel stmt: $p.tok') }
 	}
@@ -39,6 +40,18 @@ fn (mut p Parser) partial_assign_stmt(left ast.Expr) ast.AssignStmt {
 		op: op
 		left: left
 		right: right
+	}
+}
+
+fn (mut p Parser) const_decl() ast.ConstDecl {
+	p.check(.key_const)
+	mut name := p.check_name()
+	name = p.prepend_pkg(name)
+	p.check(.decl_assign)
+	expr := p.expr(0)
+	return ast.ConstDecl{
+		name: name
+		expr: expr
 	}
 }
 
