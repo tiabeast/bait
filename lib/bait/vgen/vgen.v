@@ -52,7 +52,7 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 		ast.ExprStmt { g.expr(node.expr) }
 		ast.ForClassicLoop { g.for_classic_loop(node) }
 		ast.FunDecl { g.fun_decl(node) }
-		ast.PackageDecl {} // no separate action required
+		ast.PackageDecl {} // no action required
 	}
 	if node is ast.ExprStmt && !g.empty_line {
 		g.writeln('')

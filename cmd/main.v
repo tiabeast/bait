@@ -51,8 +51,18 @@ fn compile(prefs pref.Preferences) int {
 		tokens := tokenizer.tokenize_text(text)
 		files << parser.parse_tokens(tokens, p, table)
 	}
-	// TODO deps resolving
-	// TODO deps ordering
+	for i := 0; i < files.len; i++ {
+		f := files[i]
+		for imp in f.imports {
+			imp_paths := bait_files_from_dir(os.resource_abs_path('lib/$imp.name'))
+			for p in imp_paths.filter(it !in paths) {
+				paths << p
+				text := os.read_file(p) or { panic(err) }
+				tokens := tokenizer.tokenize_text(text)
+				files << parser.parse_tokens(tokens, p, table)
+			}
+		}
+	}
 	mut c := checker.new_checker(table)
 	c.check_files(files)
 	if c.errors.len > 0 {

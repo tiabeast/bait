@@ -21,13 +21,22 @@ pub fn new_checker(table &ast.Table) Checker {
 
 pub fn (mut c Checker) check_files(files []&ast.File) {
 	for f in files {
+		for imp in f.imports {
+			c.check_import(imp)
+		}
 		c.check(f)
 	}
 }
 
 fn (mut c Checker) check(file ast.File) {
 	mut mfile := unsafe { file }
+	for imp in mfile.imports {
+		c.check_import(imp)
+	}
 	c.stmts(mut mfile.stmts)
+}
+
+fn (mut c Checker) check_import(node ast.Import) {
 }
 
 fn (mut c Checker) stmts(mut stmts []ast.Stmt) {

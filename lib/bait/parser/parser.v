@@ -12,6 +12,7 @@ struct Parser {
 mut:
 	table    &ast.Table
 	scope    &ast.Scope
+	imports  []ast.Import
 	pkg_name string
 	tidx     int
 	prev_tok token.Token
@@ -36,14 +37,15 @@ fn (mut p Parser) parse() &ast.File {
 	p.next()
 	mut stmts := []ast.Stmt{}
 	stmts << p.package_decl()
-	for {
-		if p.tok.kind == .eof {
-			break
-		}
+	for p.tok.kind == .key_import {
+		p.imports << p.import_stmt()
+	}
+	for p.tok.kind != .eof {
 		stmts << p.top_level_stmt()
 	}
 	return &ast.File{
 		path: p.path
+		imports: p.imports
 		stmts: stmts
 	}
 }
@@ -126,5 +128,13 @@ fn (mut p Parser) package_decl() ast.PackageDecl {
 		no_package: no_package
 		name: name
 		full_name: full_name
+	}
+}
+
+fn (mut p Parser) import_stmt() ast.Import {
+	p.check(.key_import)
+	name := p.check_name()
+	return ast.Import{
+		name: name
 	}
 }

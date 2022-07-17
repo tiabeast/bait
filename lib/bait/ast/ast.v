@@ -56,6 +56,11 @@ pub:
 	typ  Type
 }
 
+pub struct Import {
+pub:
+	name string
+}
+
 pub struct PackageDecl {
 pub:
 	no_package bool
@@ -133,7 +138,8 @@ pub fn empty_expr() Expr {
 
 pub struct File {
 pub mut:
-	stmts []Stmt
+	stmts   []Stmt
+	imports []Import
 pub:
 	path string
 }

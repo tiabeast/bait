@@ -46,6 +46,7 @@ pub enum Kind {
 	key_for
 	key_fun
 	key_if
+	key_import
 	key_package
 	key_true
 	__end__
@@ -57,6 +58,7 @@ pub const keywords = {
 	'for':     Kind.key_for
 	'fun':     Kind.key_fun
 	'if':      Kind.key_if
+	'import':  Kind.key_import
 	'package': Kind.key_package
 	'true':    Kind.key_true
 }
