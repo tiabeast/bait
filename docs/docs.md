@@ -295,3 +295,13 @@ type CallbackFun = fun (int, int) bool
 
 <!-- TODO generics -->
 <!-- TODO concurrency -->
+
+## Calling V from Bait
+```
+import @v.semver
+
+fun main(){
+  x := @v.semver.is_valid('1.0.0')
+  @v.println(x)
+}
+```

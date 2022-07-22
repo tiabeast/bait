@@ -12,23 +12,27 @@ mut:
 	inside_for_classic bool
 	indent             int
 	empty_line         bool
-	decls strings.Builder
+	headers            strings.Builder
+	decls              strings.Builder
 	out                strings.Builder
 }
 
 pub fn gen(files []&ast.File, table &ast.Table) string {
 	mut g := Gen{
 		table: table
+		headers: strings.new_builder(100)
 		decls: strings.new_builder(100)
 		out: strings.new_builder(10000)
 	}
 	g.v_main()
 	for file in files {
+		g.v_imports(file.imports)
 		g.indent--
 		g.stmts(file.stmts)
 		g.indent++
 	}
 	mut sb := strings.new_builder(100000)
+	sb.writeln(g.headers.str())
 	sb.writeln(g.decls.str())
 	sb.writeln(g.out.str())
 	return sb.str()
@@ -38,6 +42,14 @@ fn (mut g Gen) v_main() {
 	g.writeln('fn main() {')
 	g.writeln('\tmain__main()')
 	g.writeln('}\n')
+}
+
+fn (mut g Gen) v_imports(all_imports []ast.Import) {
+	for imp in all_imports {
+		if imp.lang == .v {
+			g.headers.writeln('import $imp.name')
+		}
+	}
 }
 
 fn (mut g Gen) stmts(stmts []ast.Stmt) {
@@ -76,12 +88,14 @@ fn (mut g Gen) expr(node ast.Expr) {
 		ast.StringLiteral { g.string_literal(node) }
 	}
 }
+
 fn (mut g Gen) expr_string(node ast.Expr) string {
 	pos := g.out.len
 	g.expr(node)
 	expr_str := g.out.cut_to(pos)
 	return expr_str.trim_space()
 }
+
 fn (mut g Gen) assign_stmt(node ast.AssignStmt) {
 	g.expr(node.left)
 	g.write(' $node.op.vstr() ')

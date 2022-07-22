@@ -41,6 +41,7 @@ pub enum Kind {
 	gt // >
 	le // <=
 	ge // >=
+	at // @v
 	key_const
 	key_else
 	key_false

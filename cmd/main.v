@@ -54,6 +54,9 @@ fn compile(prefs pref.Preferences) int {
 	for i := 0; i < files.len; i++ {
 		f := files[i]
 		for imp in f.imports {
+			if imp.lang != .bait {
+				continue
+			}
 			imp_paths := bait_files_from_dir(os.resource_abs_path('lib/$imp.name'))
 			for p in imp_paths.filter(it !in paths) {
 				paths << p

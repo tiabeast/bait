@@ -8,9 +8,10 @@ import lib.bait.ast
 fn (mut p Parser) expr(precedence int) ast.Expr {
 	mut node := ast.empty_expr()
 	match p.tok.kind {
-		.name { node = p.name_expr() }
+		.name { node = p.name_expr(.bait) }
 		.number { node = p.number_literal() }
 		.string { node = p.string_literal() }
+		.at { node = p.at_expr() }
 		.key_if { node = p.if_expr() }
 		.key_true, .key_false { node = p.bool_literal() }
 		else { p.error('invalid expression: $p.tok') }
@@ -30,6 +31,11 @@ fn (mut p Parser) expr_with_left(left_ ast.Expr, precedence int) ast.Expr {
 		}
 	}
 	return left
+}
+
+fn (mut p Parser) at_expr() ast.Expr {
+	lang := p.check_lang_prefix()
+	return p.name_expr(lang)
 }
 
 fn (mut p Parser) bool_literal() ast.BoolLiteral {
@@ -131,8 +137,7 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 	}
 }
 
-fn (mut p Parser) name_expr() ast.Expr {
-	lang := p.check_lang_prefix()
+fn (mut p Parser) name_expr(lang ast.Language) ast.Expr {
 	if p.peek_tok.kind == .lpar {
 		return p.fun_call(lang)
 	}

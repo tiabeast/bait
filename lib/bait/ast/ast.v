@@ -68,18 +68,6 @@ pub:
 	typ  Type
 }
 
-pub struct Import {
-pub:
-	name string
-}
-
-pub struct PackageDecl {
-pub:
-	no_package bool
-	name       string
-	full_name  string
-}
-
 pub struct BoolLiteral {
 pub:
 	val bool
@@ -140,12 +128,17 @@ pub:
 	val string
 }
 
-pub struct EmptyStmt {}
+pub struct Import {
+pub:
+	name string
+	lang Language
+}
 
-pub struct EmptyExpr {}
-
-pub fn empty_expr() Expr {
-	return EmptyExpr{}
+pub struct PackageDecl {
+pub:
+	no_package bool
+	name       string
+	full_name  string
 }
 
 pub struct File {
@@ -154,4 +147,12 @@ pub mut:
 	imports []Import
 pub:
 	path string
+}
+
+pub struct EmptyStmt {}
+
+pub struct EmptyExpr {}
+
+pub fn empty_expr() Expr {
+	return EmptyExpr{}
 }

@@ -84,7 +84,7 @@ fn (mut p Parser) check_name() string {
 }
 
 fn (mut p Parser) check_lang_prefix() ast.Language {
-	if p.tok.lit == 'V' {
+	if p.tok.lit == '@v' {
 		p.next()
 		p.check(.dot)
 		return .v
@@ -133,8 +133,10 @@ fn (mut p Parser) package_decl() ast.PackageDecl {
 
 fn (mut p Parser) import_stmt() ast.Import {
 	p.check(.key_import)
+	lang := p.check_lang_prefix()
 	name := p.check_name()
 	return ast.Import{
 		name: name
+		lang: lang
 	}
 }

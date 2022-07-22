@@ -155,6 +155,11 @@ fn (mut t Tokenizer) text_scan() token.Token {
 				}
 				return t.new_kind_token(.gt)
 			}
+			`@` {
+				t.pos++
+				name := '@' + t.ident_name()
+				return t.new_token(.at, name, name.len)
+			}
 			else {}
 		}
 		t.error('invalid character: $c.ascii_str()')
