@@ -46,7 +46,11 @@ fn (mut p Parser) bool_literal() ast.BoolLiteral {
 }
 
 fn (mut p Parser) fun_call(lang ast.Language) ast.CallExpr {
-	name := p.check_name()
+	mut name := p.check_name()
+	if p.expr_pkg.len > 0 {
+		name = '${p.expr_pkg}.$name'
+		p.expr_pkg = ''
+	}
 	p.check(.lpar)
 	args := p.call_args()
 	p.check(.rpar)
@@ -87,10 +91,15 @@ fn (mut p Parser) dot_expr(left ast.Expr) ast.Expr {
 	return p.method_call(left)
 }
 
-fn (mut p Parser) ident() ast.Ident {
-	name := p.check_name()
+fn (mut p Parser) ident(lang ast.Language) ast.Ident {
+	mut name := p.check_name()
+	if p.expr_pkg.len > 0 {
+		name = '${p.expr_pkg}.$name'
+		p.expr_pkg = ''
+	}
 	return ast.Ident{
 		name: name
+		lang: lang
 	}
 }
 
@@ -138,10 +147,15 @@ fn (mut p Parser) infix_expr(left ast.Expr) ast.InfixExpr {
 }
 
 fn (mut p Parser) name_expr(lang ast.Language) ast.Expr {
+	if p.peek_tok.kind == .dot && p.has_import(lang, p.tok.lit) {
+		p.expr_pkg = p.tok.lit
+		p.next()
+		p.next()
+	}
 	if p.peek_tok.kind == .lpar {
 		return p.fun_call(lang)
 	}
-	return p.ident()
+	return p.ident(lang)
 }
 
 fn (mut p Parser) number_literal() ast.Expr {

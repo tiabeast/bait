@@ -10,14 +10,16 @@ struct Parser {
 	all_tokens []token.Token
 	path       string
 mut:
-	table    &ast.Table
-	scope    &ast.Scope
-	imports  []ast.Import
-	pkg_name string
-	tidx     int
-	prev_tok token.Token
-	tok      token.Token
-	peek_tok token.Token
+	table       &ast.Table
+	scope       &ast.Scope
+	pkg_name    string
+	ast_imports []ast.Import
+	imports     []string
+	expr_pkg    string
+	tidx        int
+	prev_tok    token.Token
+	tok         token.Token
+	peek_tok    token.Token
 }
 
 pub fn parse_tokens(tokens []token.Token, path string, table &ast.Table) &ast.File {
@@ -38,14 +40,14 @@ fn (mut p Parser) parse() &ast.File {
 	mut stmts := []ast.Stmt{}
 	stmts << p.package_decl()
 	for p.tok.kind == .key_import {
-		p.imports << p.import_stmt()
+		p.ast_imports << p.import_stmt()
 	}
 	for p.tok.kind != .eof {
 		stmts << p.top_level_stmt()
 	}
 	return &ast.File{
 		path: p.path
-		imports: p.imports
+		imports: p.ast_imports
 		stmts: stmts
 	}
 }
@@ -135,8 +137,15 @@ fn (mut p Parser) import_stmt() ast.Import {
 	p.check(.key_import)
 	lang := p.check_lang_prefix()
 	name := p.check_name()
+	alias := lang.src_str() + name
+	p.imports << alias
 	return ast.Import{
 		name: name
+		alias: alias
 		lang: lang
 	}
+}
+
+fn (p Parser) has_import(lang ast.Language, lit string) bool {
+	return lang.src_str() + lit in p.imports
 }

@@ -7,3 +7,10 @@ pub enum Language {
 	bait
 	v
 }
+
+pub fn (l Language) src_str() string {
+	return match l {
+		.bait { '' }
+		.v { '@v.' }
+	}
+}

@@ -93,6 +93,7 @@ pub:
 pub struct Ident {
 pub mut:
 	name string
+	lang Language
 }
 
 pub struct IfExpr {
@@ -130,8 +131,9 @@ pub:
 
 pub struct Import {
 pub:
-	name string
-	lang Language
+	name  string
+	alias string
+	lang  Language
 }
 
 pub struct PackageDecl {

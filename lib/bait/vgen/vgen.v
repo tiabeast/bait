@@ -155,7 +155,7 @@ fn (mut g Gen) call_expr(node ast.CallExpr) {
 		g.expr(node.left)
 		g.write('.')
 	}
-	name := v_name(node.name)
+	name := if node.lang == .v { node.name } else { v_name(node.name) }
 	g.write('${name}(')
 	g.call_args(node.args)
 	g.write(')')
@@ -175,7 +175,7 @@ fn (mut g Gen) float_literal(node ast.FloatLiteral) {
 }
 
 fn (mut g Gen) ident(node ast.Ident) {
-	name := v_name(node.name)
+	name := if node.lang == .v { node.name } else { v_name(node.name) }
 	g.write(name)
 }
 
